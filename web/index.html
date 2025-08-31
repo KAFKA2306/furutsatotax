@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>ふるさと納税限度額計算機</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
     h1 { color: #2d3748; border-bottom: 3px solid #4299e1; padding-bottom: 10px; }
@@ -43,6 +44,17 @@
     .highlight { font-size: 24px; font-weight: bold; color: #e53e3e; background: #fed7d7; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0; }
     .calculation { font-family: monospace; background: white; padding: 15px; border-radius: 4px; margin: 15px 0; line-height: 1.6; }
     .step { margin: 8px 0; }
+    
+    .charts-section { margin: 40px 0; }
+    .charts-section h2 { color: #2d3748; font-size: 24px; margin-bottom: 30px; border-bottom: 2px solid #4299e1; padding-bottom: 10px; }
+    .chart-container { margin: 30px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+    .chart-canvas { width: 100%; height: 400px; }
+    .chart-controls { margin: 20px 0; padding: 15px; background: #f7fafc; border-radius: 6px; }
+    .control-group { display: inline-block; margin: 0 15px 10px 0; }
+    .control-group label { font-weight: bold; margin-right: 10px; color: #4a5568; }
+    .chart-toggle { margin: 10px 5px; padding: 8px 12px; background: #4299e1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .chart-toggle.inactive { background: #e2e8f0; color: #718096; }
+    .chart-toggle:hover { opacity: 0.8; }
   </style>
 </head>
 <body>
@@ -181,6 +193,34 @@
     <h2>計算結果</h2>
     <div class="highlight" id="limit"></div>
     <div class="calculation" id="breakdown"></div>
+  </div>
+
+  <div id="chartsSection" class="charts-section" style="display: none;">
+    <h2>📊 給与収入別税額シミュレーション</h2>
+    
+    <div class="chart-controls">
+      <div class="control-group">
+        <label>表示切替:</label>
+        <button class="chart-toggle" id="toggleTaxChart">税額比較</button>
+        <button class="chart-toggle" id="toggleSavingsChart">節税効果</button>
+        <button class="chart-toggle" id="toggleFurusatoChart">ふるさと納税</button>
+      </div>
+      <div class="control-group">
+        <button class="chart-toggle" id="updateCharts">📈 グラフを更新</button>
+      </div>
+    </div>
+    
+    <div class="chart-container" id="taxChartContainer">
+      <canvas id="taxComparisonChart" class="chart-canvas"></canvas>
+    </div>
+    
+    <div class="chart-container" id="savingsChartContainer" style="display: none;">
+      <canvas id="savingsEffectChart" class="chart-canvas"></canvas>
+    </div>
+    
+    <div class="chart-container" id="furusatoChartContainer" style="display: none;">
+      <canvas id="furusatoChart" class="chart-canvas"></canvas>
+    </div>
   </div>
 
   <script src="app.js"></script>

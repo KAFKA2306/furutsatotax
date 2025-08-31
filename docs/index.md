@@ -40,3 +40,10 @@
 - ふるさと納税の上限目安: 約120,300円（= (所得税 + 住民税) × 20% を100円単位切り捨て）
 
 注意: 本サイトは一般的な情報提供を目的としています。制度・税制は改正される可能性があるため、最終判断は必ず公的資料・最新の法令や各制度の公式情報でご確認ください。
+
+## 参考資料（出典）
+- 国税庁タックスアンサー「No.2260 所得税の税率」: https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/2260.htm
+- 国税庁「令和7年度 税制改正による基礎控除の見直し」: https://www.nta.go.jp/users/gensen/2025kiso/index.htm
+- 総務省（個人住民税の制度解説・地方税法）: https://www.soumu.go.jp/
+- 総務省 ふるさと納税ポータル「寄附金税額控除の概要」: https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/furusato/mechanism/deduction.html
+- 住民税の基礎控除見直し（参考資料の一例）: https://www.soumu.go.jp/main_content/000667390.pdf

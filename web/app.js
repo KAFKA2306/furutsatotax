@@ -289,6 +289,12 @@ function calculate() {
     `<div class="step">${step}</div>`
   ).join('');
   document.getElementById('result').style.display = 'block';
+  
+  // グラフセクションを表示
+  document.getElementById('chartsSection').style.display = 'block';
+  
+  // 初回グラフ描画
+  renderCharts();
 }
 
 function formatMoney(amount) {
@@ -406,6 +412,285 @@ const CHART_COLORS = {
   background: 'rgba(247, 250, 252, 0.8)'
 };
 
+// グラフインスタンス保持用
+let taxComparisonChart = null;
+let savingsEffectChart = null;
+let furusatoChart = null;
+
+// 3つのグラフを描画
+function renderCharts() {
+  const data = generateChartData();
+  
+  // 1. 税額比較グラフ（積み上げ棒グラフ）
+  renderTaxComparisonChart(data);
+  
+  // 2. 節税効果グラフ（エリアグラフ）
+  renderSavingsEffectChart(data);
+  
+  // 3. ふるさと納税限度額グラフ（線グラフ）
+  renderFurusatoChart(data);
+}
+
+// 1. 税額比較グラフ
+function renderTaxComparisonChart(data) {
+  const ctx = document.getElementById('taxComparisonChart');
+  if (!ctx) return;
+  
+  if (taxComparisonChart) {
+    taxComparisonChart.destroy();
+  }
+  
+  taxComparisonChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels.map(x => `${x}万円`),
+      datasets: [
+        {
+          label: '制度適用前の税額',
+          data: data.datasets.taxWithoutDeductions.map(x => Math.round(x / 10000)),
+          backgroundColor: CHART_COLORS.tax,
+          borderColor: CHART_COLORS.tax,
+          borderWidth: 1
+        },
+        {
+          label: '制度適用後の税額',
+          data: data.datasets.taxWithDeductions.map(x => Math.round(x / 10000)),
+          backgroundColor: CHART_COLORS.deduction,
+          borderColor: CHART_COLORS.deduction,
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: '📊 給与収入別税額比較（DCマッチング・iDeCo・小規模企業共済満額適用）',
+          font: { size: 16, weight: 'bold' },
+          padding: 20
+        },
+        legend: {
+          position: 'top',
+          labels: { usePointStyle: true, padding: 15 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y}万円`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '給与収入', font: { size: 14 } }
+        },
+        y: {
+          title: { display: true, text: '年間税額（万円）', font: { size: 14 } },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// 2. 節税効果グラフ
+function renderSavingsEffectChart(data) {
+  const ctx = document.getElementById('savingsEffectChart');
+  if (!ctx) return;
+  
+  if (savingsEffectChart) {
+    savingsEffectChart.destroy();
+  }
+  
+  savingsEffectChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels.map(x => `${x}万円`),
+      datasets: [
+        {
+          label: 'DCマッチング効果',
+          data: data.datasets.dcMatchingEffects.map(x => Math.round(x / 10000)),
+          backgroundColor: 'rgba(245, 101, 101, 0.3)',
+          borderColor: CHART_COLORS.dcMatching,
+          borderWidth: 2,
+          fill: true
+        },
+        {
+          label: 'iDeCo効果',
+          data: data.datasets.idecoEffects.map(x => Math.round(x / 10000)),
+          backgroundColor: 'rgba(72, 187, 120, 0.3)',
+          borderColor: CHART_COLORS.ideco,
+          borderWidth: 2,
+          fill: true
+        },
+        {
+          label: '小規模企業共済効果',
+          data: data.datasets.smallBusinessEffects.map(x => Math.round(x / 10000)),
+          backgroundColor: 'rgba(237, 137, 54, 0.3)',
+          borderColor: CHART_COLORS.smallBusiness,
+          borderWidth: 2,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: '💰 各制度の年間節税効果',
+          font: { size: 16, weight: 'bold' },
+          padding: 20
+        },
+        legend: {
+          position: 'top',
+          labels: { usePointStyle: true, padding: 15 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y}万円の節税`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '給与収入', font: { size: 14 } }
+        },
+        y: {
+          title: { display: true, text: '年間節税額（万円）', font: { size: 14 } },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// 3. ふるさと納税限度額グラフ
+function renderFurusatoChart(data) {
+  const ctx = document.getElementById('furusatoChart');
+  if (!ctx) return;
+  
+  if (furusatoChart) {
+    furusatoChart.destroy();
+  }
+  
+  furusatoChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels.map(x => `${x}万円`),
+      datasets: [
+        {
+          label: '制度適用前の限度額',
+          data: data.datasets.furusatoLimitsOriginal.map(x => Math.round(x / 10000)),
+          borderColor: '#cbd5e0',
+          backgroundColor: 'rgba(203, 213, 224, 0.1)',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false
+        },
+        {
+          label: '制度適用後の限度額',
+          data: data.datasets.furusatoLimits.map(x => Math.round(x / 10000)),
+          borderColor: CHART_COLORS.furusato,
+          backgroundColor: 'rgba(159, 122, 234, 0.1)',
+          borderWidth: 3,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: '🎁 ふるさと納税限度額の変化',
+          font: { size: 16, weight: 'bold' },
+          padding: 20
+        },
+        legend: {
+          position: 'top',
+          labels: { usePointStyle: true, padding: 15 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y}万円`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '給与収入', font: { size: 14 } }
+        },
+        y: {
+          title: { display: true, text: 'ふるさと納税限度額（万円）', font: { size: 14 } },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// グラフ表示制御
+function setupChartControls() {
+  // グラフ切り替えボタン
+  document.getElementById('toggleTaxChart').addEventListener('click', function() {
+    showChart('tax');
+    updateToggleButtons('toggleTaxChart');
+  });
+  
+  document.getElementById('toggleSavingsChart').addEventListener('click', function() {
+    showChart('savings');
+    updateToggleButtons('toggleSavingsChart');
+  });
+  
+  document.getElementById('toggleFurusatoChart').addEventListener('click', function() {
+    showChart('furusato');
+    updateToggleButtons('toggleFurusatoChart');
+  });
+  
+  // グラフ更新ボタン
+  document.getElementById('updateCharts').addEventListener('click', function() {
+    if (document.getElementById('chartsSection').style.display !== 'none') {
+      renderCharts();
+    }
+  });
+}
+
+function showChart(chartType) {
+  // すべてのグラフコンテナを非表示
+  document.getElementById('taxChartContainer').style.display = 'none';
+  document.getElementById('savingsChartContainer').style.display = 'none';
+  document.getElementById('furusatoChartContainer').style.display = 'none';
+  
+  // 選択されたグラフを表示
+  const containers = {
+    'tax': 'taxChartContainer',
+    'savings': 'savingsChartContainer',
+    'furusato': 'furusatoChartContainer'
+  };
+  
+  if (containers[chartType]) {
+    document.getElementById(containers[chartType]).style.display = 'block';
+  }
+}
+
+function updateToggleButtons(activeId) {
+  // すべてのトグルボタンを非アクティブに
+  const buttons = ['toggleTaxChart', 'toggleSavingsChart', 'toggleFurusatoChart'];
+  buttons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.classList.toggle('inactive', id !== activeId);
+    }
+  });
+}
+
 // 初期化時にイベントをバインド（CSP下でのinline禁止にも対応）
 document.addEventListener('DOMContentLoaded', function() {
   const select = document.getElementById('patternSelect');
@@ -423,5 +708,12 @@ document.addEventListener('DOMContentLoaded', function() {
       calculate();
     });
   }
+  
+  // グラフコントロールセットアップ
+  setupChartControls();
+  
+  // デフォルトで税額比較グラフを選択
+  updateToggleButtons('toggleTaxChart');
+  
   updateDependentFields();
 });
