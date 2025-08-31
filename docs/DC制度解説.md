@@ -13,6 +13,58 @@
 2. **iDeCo（個人型確定拠出年金）**：個人が加入する確定拠出年金
 3. **小規模企業共済**：個人事業主・中小企業役員向けの退職金制度
 
+## 可視化（上限比較・代表例）
+代表的な上限（年額）の比較イメージです。制度や区分により上限は異なります（注記参照）。
+
+<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="私的年金制度の上限比較（年額・代表例）">
+  <desc>iDeCo（会社員・企業年金なし）27.6万円、iDeCo（あり）24万円、DC（会社+本人）66万円、小規模企業共済81.6万円の棒グラフ比較。</desc>
+  <!-- 軸設定: y 0〜90万円 -->
+  <rect x="0" y="0" width="720" height="360" fill="#fff" />
+  <line x1="80" y1="300" x2="680" y2="300" stroke="#333" />
+  <line x1="80" y1="40" x2="80" y2="300" stroke="#333" />
+  <!-- y目盛: 0,20,40,60,80,90 -->
+  <g fill="#333" font-size="11">
+    <g>
+      <line x1="80" y1="300" x2="75" y2="300" stroke="#333" />
+      <text x="70" y="304" text-anchor="end">0</text>
+      <line x1="80" y1="246" x2="75" y2="246" stroke="#999" />
+      <text x="70" y="250" text-anchor="end">20</text>
+      <line x1="80" y1="192" x2="75" y2="192" stroke="#999" />
+      <text x="70" y="196" text-anchor="end">40</text>
+      <line x1="80" y1="138" x2="75" y2="138" stroke="#999" />
+      <text x="70" y="142" text-anchor="end">60</text>
+      <line x1="80" y1="84" x2="75" y2="84" stroke="#999" />
+      <text x="70" y="88" text-anchor="end">80</text>
+      <line x1="80" y1="40" x2="75" y2="40" stroke="#333" />
+      <text x="70" y="44" text-anchor="end">90</text>
+      <text x="24" y="40" text-anchor="start" transform="rotate(-90 24,40)">上限（万円/年）</text>
+    </g>
+  </g>
+  <!-- 棒（幅80, 隙間60） -->
+  <g>
+    <!-- iDeCo（なし）: 27.6 → 高さ = (27.6/90)*260 ≈ 79.7 → y = 300-79.7 ≈ 220.3 -->
+    <rect x="120" y="220.3" width="80" height="79.7" fill="#1f77b4" />
+    <text x="160" y="318" text-anchor="middle" font-size="11">iDeCo（なし）</text>
+    <text x="160" y="214" text-anchor="middle" font-size="11" fill="#1f77b4">27.6</text>
+
+    <!-- iDeCo（あり）: 24 → 高さ = (24/90)*260 ≈ 69.3 → y ≈ 230.7 -->
+    <rect x="260" y="230.7" width="80" height="69.3" fill="#2ca02c" />
+    <text x="300" y="318" text-anchor="middle" font-size="11">iDeCo（あり）</text>
+    <text x="300" y="224" text-anchor="middle" font-size="11" fill="#2ca02c">24</text>
+
+    <!-- DC（会社+本人）: 66 → 高さ = (66/90)*260 ≈ 190.7 → y ≈ 109.3 -->
+    <rect x="400" y="109.3" width="80" height="190.7" fill="#ff7f0e" />
+    <text x="440" y="318" text-anchor="middle" font-size="11">DC（合計）</text>
+    <text x="440" y="103" text-anchor="middle" font-size="11" fill="#ff7f0e">66</text>
+
+    <!-- 小規模企業共済: 81.6 → 高さ = (81.6/90)*260 ≈ 235.7 → y ≈ 64.3 -->
+    <rect x="540" y="64.3" width="80" height="235.7" fill="#9467bd" />
+    <text x="580" y="318" text-anchor="middle" font-size="11">小規模企業共済</text>
+    <text x="580" y="58" text-anchor="middle" font-size="11" fill="#9467bd">81.6</text>
+  </g>
+  <text x="680" y="334" text-anchor="end" font-size="11" fill="#555">注: 区分・制度改正で上限は変動します。</text>
+</svg>
+
 ## 各制度の詳細
 
 ### 1. DCマッチング拠出

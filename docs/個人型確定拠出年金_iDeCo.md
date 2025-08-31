@@ -31,6 +31,53 @@
 - 所得税率は速算表（5%〜45%）の限界税率を想定（復興特別所得税は簡易モデルでは未考慮）
 - iDeCoの掛金は原則全額が所得控除（小規模企業共済等掛金控除）の対象（加入区分ごとの上限に従う）
 
+## 可視化（掛金と節税効果の関係）
+例として、限界税率30%（所得税20% + 住民税10%）の場合の年間ベースの関係を示します。横軸は掛金額（万円/年）、縦軸は概算の節税効果（万円/年）。
+
+<svg viewBox="0 0 640 320" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="iDeCo: 掛金と節税効果（税率30%例）">
+  <desc>掛金に対して節税効果は約30%分だけ直線的に増加。会社員（企業年金なし）の上限は年27.6万円、ありは年24万円など区分により異なる。</desc>
+  <!-- 軸設定: x 0〜27.6万円, y 0〜8.5万円（約30%） -->
+  <rect x="0" y="0" width="640" height="320" fill="#fff" />
+  <line x1="50" y1="260" x2="590" y2="260" stroke="#333" />
+  <line x1="50" y1="20" x2="50" y2="260" stroke="#333" />
+  <g fill="#333" font-size="10">
+    <!-- x ticks: 0,6,12,18,24,27.6 -->
+    <g>
+      <line x1="50" y1="260" x2="50" y2="265" stroke="#333" />
+      <text x="50" y="278" text-anchor="middle">0</text>
+      <line x1="186" y1="260" x2="186" y2="265" stroke="#999" />
+      <text x="186" y="278" text-anchor="middle">6</text>
+      <line x1="322" y1="260" x2="322" y2="265" stroke="#999" />
+      <text x="322" y="278" text-anchor="middle">12</text>
+      <line x1="458" y1="260" x2="458" y2="265" stroke="#999" />
+      <text x="458" y="278" text-anchor="middle">18</text>
+      <line x1="544" y1="260" x2="544" y2="265" stroke="#999" />
+      <text x="544" y="278" text-anchor="middle">24</text>
+      <line x1="590" y1="260" x2="590" y2="265" stroke="#333" />
+      <text x="590" y="278" text-anchor="middle">27.6</text>
+      <text x="590" y="294" text-anchor="end">掛金額（万円/年）</text>
+    </g>
+    <!-- y ticks: 0,2,4,6,8 -->
+    <g>
+      <line x1="50" y1="260" x2="45" y2="260" stroke="#333" />
+      <text x="38" y="264" text-anchor="end">0</text>
+      <line x1="50" y1="212" x2="45" y2="212" stroke="#999" />
+      <text x="38" y="216" text-anchor="end">2</text>
+      <line x1="50" y1="164" x2="45" y2="164" stroke="#999" />
+      <text x="38" y="168" text-anchor="end">4</text>
+      <line x1="50" y1="116" x2="45" y2="116" stroke="#999" />
+      <text x="38" y="120" text-anchor="end">6</text>
+      <line x1="50" y1="68" x2="45" y2="68" stroke="#999" />
+      <text x="38" y="72" text-anchor="end">8</text>
+      <text x="12" y="20" text-anchor="start" transform="rotate(-90 12,20)">概算節税効果（万円/年）</text>
+    </g>
+  </g>
+  <!-- 直線: y ≒ 0.3x → (0,0)〜(27.6,8.28) -->
+  <polyline fill="none" stroke="#1f77b4" stroke-width="2" points="50,260 590,60.6" />
+  <text x="360" y="40" fill="#1f77b4" font-size="11">税率30%の例（目安）</text>
+  <text x="50" y="300" font-size="11" fill="#555">注: 区分により上限（24/27.6/81.6万円等）が変わります。</text>
+</svg>
+
 ## 計算例
 前提
 - 掛金: 月2万円（年24万円）

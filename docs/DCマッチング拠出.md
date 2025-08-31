@@ -33,6 +33,57 @@
 - 所得税率は速算表（5%〜45%）の限界税率を想定（復興特別所得税は簡易モデルでは未考慮）
 - 本人拠出は原則全額が所得控除（小規模企業共済等掛金控除）の対象（制度上限・規約条件あり）
 
+## 可視化（本人拠出と節税効果の関係）
+例として、適用される限界税率が30%（所得税20% + 住民税10%）の場合の年間ベースの関係を示します。横軸は本人拠出額（万円/年）、縦軸は概算の節税効果（万円/年）。
+
+<svg viewBox="0 0 640 320" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="マッチング拠出: 拠出額と節税効果（税率30%例）">
+  <desc>拠出額に対し節税効果は約30%分だけ直線的に増加。上限は会社拠出との合計で年66万円（本人拠出は会社拠出額を超えない）。</desc>
+  <!-- 軸設定: x 0〜66万円, y 0〜20万円（約30%） -->
+  <rect x="0" y="0" width="640" height="320" fill="#fff" />
+  <line x1="50" y1="260" x2="590" y2="260" stroke="#333" />
+  <line x1="50" y1="20" x2="50" y2="260" stroke="#333" />
+  <g fill="#333" font-size="10">
+    <!-- x ticks: 0,10,20,30,40,50,60,66 -->
+    <g>
+      <line x1="50" y1="260" x2="50" y2="265" stroke="#333" />
+      <text x="50" y="278" text-anchor="middle">0</text>
+      <line x1="132" y1="260" x2="132" y2="265" stroke="#999" />
+      <text x="132" y="278" text-anchor="middle">10</text>
+      <line x1="214" y1="260" x2="214" y2="265" stroke="#999" />
+      <text x="214" y="278" text-anchor="middle">20</text>
+      <line x1="296" y1="260" x2="296" y2="265" stroke="#999" />
+      <text x="296" y="278" text-anchor="middle">30</text>
+      <line x1="378" y1="260" x2="378" y2="265" stroke="#999" />
+      <text x="378" y="278" text-anchor="middle">40</text>
+      <line x1="460" y1="260" x2="460" y2="265" stroke="#999" />
+      <text x="460" y="278" text-anchor="middle">50</text>
+      <line x1="542" y1="260" x2="542" y2="265" stroke="#999" />
+      <text x="542" y="278" text-anchor="middle">60</text>
+      <line x1="590" y1="260" x2="590" y2="265" stroke="#333" />
+      <text x="590" y="278" text-anchor="middle">66</text>
+      <text x="590" y="294" text-anchor="end">本人拠出額（万円/年）</text>
+    </g>
+    <!-- y ticks: 0,5,10,15,20 -->
+    <g>
+      <line x1="50" y1="260" x2="45" y2="260" stroke="#333" />
+      <text x="38" y="264" text-anchor="end">0</text>
+      <line x1="50" y1="200" x2="45" y2="200" stroke="#999" />
+      <text x="38" y="204" text-anchor="end">5</text>
+      <line x1="50" y1="140" x2="45" y2="140" stroke="#999" />
+      <text x="38" y="144" text-anchor="end">10</text>
+      <line x1="50" y1="80" x2="45" y2="80" stroke="#999" />
+      <text x="38" y="84" text-anchor="end">15</text>
+      <line x1="50" y1="20" x2="45" y2="20" stroke="#333" />
+      <text x="38" y="24" text-anchor="end">20</text>
+      <text x="12" y="20" text-anchor="start" transform="rotate(-90 12,20)">概算節税効果（万円/年）</text>
+    </g>
+  </g>
+  <!-- 線: y ≒ 0.3x → (0,0)〜(66,19.8) -->
+  <polyline fill="none" stroke="#1f77b4" stroke-width="2" points="50,260 590,22.4" />
+  <text x="360" y="40" fill="#1f77b4" font-size="11">税率30%の例（目安）</text>
+  <text x="50" y="300" font-size="11" fill="#555">注: 実際は会社規約の上限・会社拠出額に制約されます。</text>
+</svg>
+
 ## 計算例
 前提
 - 本人拠出: 月2万円（年24万円）
