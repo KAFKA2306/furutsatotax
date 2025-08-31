@@ -28,7 +28,7 @@ async function loadPattern() {
 // 簡易YAML解析
 function parseYaml(yamlText) {
   const data = {};
-  const lines = yamlText.split('\\n');
+  const lines = yamlText.split('\n');
   
   for (const line of lines) {
     const trimmed = line.trim();
@@ -85,9 +85,11 @@ function calculate() {
   const socialInsurance = parseFloat(document.getElementById('socialInsurance').value) || 0;
   const basicDeduction = parseFloat(document.getElementById('basicDeduction').value) || 480000;
   const spouseDeduction = parseFloat(document.getElementById('spouseDeduction').value) || 0;
-  const dcMatching = parseFloat(document.getElementById('dcMatching').value) || 0;
   const ideco = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusiness = parseFloat(document.getElementById('smallBusiness').value) || 0;
+  
+  // dcマッチング拠出は給与の5%、年間66万円まで（2023年制度）
+  const dcMatching = Math.min(salaryIncome * 0.05, 660000);
 
   if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0) {
     alert('収入を入力してください');
@@ -122,6 +124,9 @@ function calculate() {
   steps.push(`合計所得 = ${formatMoney(totalIncome)}`);
   steps.push('');
 
+  // dcマッチングをフォームに表示
+  document.getElementById('dcMatching').value = dcMatching;
+  
   // 2. 所得控除計算
   const totalDeduction = socialInsurance + basicDeduction + spouseDeduction + dcMatching + ideco + smallBusiness;
   
@@ -129,7 +134,7 @@ function calculate() {
   if (socialInsurance > 0) steps.push(`社会保険料控除: ${formatMoney(socialInsurance)}`);
   if (basicDeduction > 0) steps.push(`基礎控除: ${formatMoney(basicDeduction)}`);
   if (spouseDeduction > 0) steps.push(`配偶者控除: ${formatMoney(spouseDeduction)}`);
-  if (dcMatching > 0) steps.push(`dcマッチング: ${formatMoney(dcMatching)}`);
+  if (dcMatching > 0) steps.push(`dcマッチング: ${formatMoney(dcMatching)} (給与×5%、上陖66万)`);
   if (ideco > 0) steps.push(`iDeCo: ${formatMoney(ideco)}`);
   if (smallBusiness > 0) steps.push(`小規模企業共済: ${formatMoney(smallBusiness)}`);
   steps.push(`所得控除合計 = ${formatMoney(totalDeduction)}`);
