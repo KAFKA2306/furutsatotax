@@ -28,55 +28,26 @@
 - 住民税（概算）: `課税所得 × 10%`（所得割のみ・標準税率）
 - ふるさと納税の上限目安（簡易）: `(所得税額 + 住民税（所得割）) × 20%` を100円単位で切り捨て
 
-## 全体フロー（可視化）
-本サイト内ツール・解説の概念的な流れです。
+## 全体フロー（計算の流れ）
+本ツールでの税額計算とふるさと納税上限の計算手順：
 
-<svg viewBox="0 0 720 280" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="税額計算とふるさと納税上限の全体フロー">
-  <desc>収入→合計所得→所得控除→課税所得→所得税・住民税→上限目安（住民税所得割の2割目安）という流れ。</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
-    </marker>
-  </defs>
-  <rect x="0" y="0" width="720" height="280" fill="#fff" />
-  <!-- Boxes -->
-  <g fill="#333" font-size="12">
-    <rect x="40" y="40" width="120" height="44" rx="6" ry="6" fill="#e8f0fe" stroke="#6c8cd5" />
-    <text x="100" y="66" text-anchor="middle">収入・差益</text>
-
-    <rect x="200" y="40" width="140" height="44" rx="6" ry="6" fill="#e8f0fe" stroke="#6c8cd5" />
-    <text x="270" y="66" text-anchor="middle">合計所得金額等</text>
-
-    <rect x="380" y="40" width="140" height="44" rx="6" ry="6" fill="#e8f0fe" stroke="#6c8cd5" />
-    <text x="450" y="66" text-anchor="middle">所得控除</text>
-
-    <rect x="560" y="40" width="120" height="44" rx="6" ry="6" fill="#e8f0fe" stroke="#6c8cd5" />
-    <text x="620" y="66" text-anchor="middle">課税所得</text>
-
-    <rect x="160" y="160" width="160" height="44" rx="6" ry="6" fill="#e6f4ea" stroke="#5aa469" />
-    <text x="240" y="186" text-anchor="middle">所得税（速算表）</text>
-
-    <rect x="360" y="160" width="160" height="44" rx="6" ry="6" fill="#e6f4ea" stroke="#5aa469" />
-    <text x="440" y="186" text-anchor="middle">住民税（所得割）</text>
-
-    <rect x="560" y="160" width="140" height="44" rx="6" ry="6" fill="#fff3cd" stroke="#d4a106" />
-    <text x="630" y="186" text-anchor="middle">上限目安</text>
-    <text x="630" y="202" text-anchor="middle" font-size="11">住民税所得割の2割</text>
-  </g>
-  <!-- Arrows -->
-  <g stroke="#555" stroke-width="2" marker-end="url(#arrow)">
-    <line x1="160" y1="62" x2="200" y2="62" />
-    <line x1="340" y1="62" x2="380" y2="62" />
-    <line x1="520" y1="62" x2="560" y2="62" />
-    <line x1="620" y1="84" x2="240" y2="160" />
-    <line x1="620" y1="84" x2="440" y2="160" />
-    <line x1="520" y1="182" x2="560" y2="182" />
-  </g>
-  <!-- Labels under boxes -->
-  <g fill="#666" font-size="11">
-    <text x="450" y="92" text-anchor="middle">基礎控除・社会保険料・iDeCo など</text>
-  </g>
-</svg>
+```
+┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────┐
+│  収入・差益   │ -> │ 合計所得金額等    │ -> │   所得控除      │ -> │  課税所得   │
+│             │    │                │    │                │    │            │
+│ 給与・副業   │    │ 給与所得控除後   │    │ 基礎控除        │    │ 所得税用    │
+│ 投資収益    │    │ の合計         │    │ 社会保険料      │    │ 住民税用    │
+│            │    │               │    │ iDeCo等        │    │            │
+└─────────────┘    └─────────────────┘    └─────────────────┘    └─────────────┘
+                                                                    │
+                             ┌─────────────────┐                    │
+                             │ ふるさと納税上限  │ <- ───────────────────┘
+                             │                │
+                             │ (所得税+住民税   │    ┌─────────────┐  ┌─────────────┐
+                             │  所得割)×20%   │    │   所得税    │  │   住民税    │
+                             │                │ <- │ (速算表)   │  │ (所得割10%) │
+                             └─────────────────┘    └─────────────┘  └─────────────┘
+```
 ## 計算例
 前提（簡易モデル）
 - 年収等からの総所得金額等: 540万円相当

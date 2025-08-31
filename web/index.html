@@ -6,7 +6,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
-    h1 { color: #2d3748; border-bottom: 3px solid #4299e1; padding-bottom: 10px; }
+    h1 { color: #2d3748; margin: 0; }
+    .top-nav { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+    .docs-link { color: #4299e1; text-decoration: none; font-weight: 600; }
+    .docs-link:hover { text-decoration: underline; }
+    .header-divider { border: none; border-bottom: 3px solid #4299e1; margin: 8px 0 16px; }
     
     .pattern-section { margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4299e1; }
     .pattern-section h3 { margin: 0 0 15px 0; color: #2d3748; }
@@ -58,7 +62,11 @@
   </style>
 </head>
 <body>
-  <h1>ふるさと納税限度額計算機</h1>
+  <div class="top-nav">
+    <h1>ふるさと納税限度額計算機</h1>
+    <a class="docs-link" href="mkdocs/">📚 解説・ドキュメント</a>
+  </div>
+  <hr class="header-divider" />
   
   <div class="pattern-section">
     <h3>🔄 クイック設定</h3>
