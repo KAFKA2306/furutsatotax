@@ -23,7 +23,7 @@ function updateDependentFields() {
 
   // 4. 基礎控除（所得税側の自動判定）- 合計所得金額と年分に応じて判定
   try {
-    const salaryDed = salaryDeduction(salaryIncome);
+    const salaryDed = salaryDeductionForYear(salaryIncome, taxYear);
     const netSalaryIncome = Math.max(0, salaryIncome - salaryDed);
     const netSideIncome = sideIncome * (1 - expenseRate);
     const aggregateIncome = netSalaryIncome + netSideIncome + capitalGains;
@@ -163,9 +163,10 @@ function parseYaml(yamlText) {
   return data;
 }
 
-// 給与所得控除計算（所得税法第28条・2023年税制）
-function salaryDeduction(income) {
-  if (income <= 1625000) return Math.max(550000, income * 0.4);
+// 給与所得控除計算（簡易・年分対応）
+function salaryDeductionForYear(income, taxYear) {
+  const minFloor = (taxYear >= 2025) ? 650000 : 550000;
+  if (income <= 1625000) return Math.max(minFloor, income * 0.4);
   if (income <= 1800000) return income * 0.4 + 100000;
   if (income <= 3600000) return income * 0.3 + 280000;
   if (income <= 6600000) return income * 0.2 + 640000;
@@ -195,6 +196,7 @@ function incomeTaxCalc(taxableIncome) {
 }
 
 function calculate() {
+  const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
   // フォームから入力値取得
   const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
@@ -224,7 +226,7 @@ function calculate() {
   steps.push('■ 所得計算（所得税法第28条・第35条・第33条）');
   
   // 給与所得
-  const salaryDeductionAmount = salaryDeduction(salaryIncome);
+  const salaryDeductionAmount = salaryDeductionForYear(salaryIncome, taxYear);
   const netSalaryIncome = salaryIncome - salaryDeductionAmount;
   if (salaryIncome > 0) {
     steps.push(`給与所得 = ${formatMoney(salaryIncome)} - ${formatMoney(salaryDeductionAmount)} = ${formatMoney(netSalaryIncome)}`);

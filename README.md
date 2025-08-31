@@ -9,8 +9,9 @@ https://kafka2306.github.io/furutsatotax/
 ## 法的根拠（計算式の出典と簡易化の前提）
 - 所得税（超過累進税率）: 国税庁タックスアンサー「No.2260 所得税の税率」に基づき、分離課税等を除く総合課税の速算表（5%/10%/20%/23%/33%/40%/45%）を用いて概算します。復興特別所得税は未考慮です。
   - 参考: https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/2260.htm
-- 基礎控除（所得税）: 合計所得金額に応じて 48万円（〜2,400万円）/32万円（〜2,450万円）/16万円（〜2,500万円）/0円（超2,500万円）。
-  - 参考: 国税庁（基礎控除の見直し等・タックスアンサー該当ページ） https://www.nta.go.jp/
+- 基礎控除（所得税・令和7年度改正）: 令和7・8年分は「95万（〜132万）/88万（〜336万）/68万（〜489万）/63万（〜655万）/58万（〜2,350万）」、2,350万超は従前どおり「48万/32万/16万/0」。令和9年分以後は「95万（〜132万）/58万（〜2,350万）」とし、2,350万超は従前どおり。
+  - 参考: 国税庁「令和７年度税制改正による所得税の基礎控除の見直し等について」 https://www.nta.go.jp/users/gensen/2025kiso/index.htm
+  - 参考: 国税庁（タックスアンサー等） https://www.nta.go.jp/
 - 住民税（所得割の標準税率）: 地方税法における個人住民税の標準税率として、所得割は合計10%（都道府県民税4%＋市町村民税6%）が基本です。本ツールはこの10%のみを採用し、均等割・調整控除・配当控除等は未考慮です。
   - 参考（制度解説・法令）：総務省（個人住民税の制度解説・地方税法） https://www.soumu.go.jp/
 - ふるさと納税（寄附金税額控除・特例分の上限）: 個人住民税の寄附金税額控除（特例分）は「住民税所得割額の20%」が上限です。実務上は、所得税側の寄附金控除および住民税側の寄附金税額控除（基本分＋特例分）の組合せにより実質負担2,000円となる範囲が決まります。本ツールは簡易式として「(所得税額＋住民税（所得割）)×20%」を上限目安として近似します。
@@ -52,6 +53,7 @@ https://kafka2306.github.io/furutsatotax/
 - `basic_deduction_income`: 所得税の基礎控除（円）［省略時は自動計算］
 - `basic_deduction_resident`: 住民税の基礎控除（円）［省略時は自動計算］
 - `basic_deduction`: 上記2つを同一額で一括指定したい場合の互換キー（両税目に適用）
+- `tax_year`: 計算対象の年分（例: 2025/2026/2027）。CLI の `--tax-year` と同義で、指定がない場合は CLI の設定が使われます。
 
 日本語キー → 英字キーのマッピング（`scripts/normalize_data.py` が使用）
 - `給与収入` → `salary_income`
@@ -62,6 +64,7 @@ https://kafka2306.github.io/furutsatotax/
 - `基礎控除` → `basic_deduction`
 - `所得税の基礎控除` → `basic_deduction_income`
 - `住民税の基礎控除` → `basic_deduction_resident`
+- `年分`/`税年` → `tax_year`
 - `dcマッチング拠出` → `dc_matching`
 - `iDeCo拠出` → `ideco`
 - `小規模企業共済` → `small_business`
@@ -73,9 +76,9 @@ python scripts/normalize_data.py input_ja.yml normalized.yml
 
 ### 4) 上限目安の計算
 ```bash
-python scripts/calc_furusato.py normalized.yml
+python scripts/calc_furusato.py normalized.yml --tax-year 2025
 # もしくは、正規化済みの YAML を直接指定
-python scripts/calc_furusato.py input_en.yml
+python scripts/calc_furusato.py input_en.yml --tax-year 2027
 ```
 
 ## 計算ロジック（概要）
@@ -104,6 +107,7 @@ small_business: 0            # 小規模企業共済
 # basic_deduction_income: 480000      # 所得税の基礎控除（自動計算を上書き）
 # basic_deduction_resident: 430000    # 住民税の基礎控除（自動計算を上書き）
 # basic_deduction: 480000             # 両税目を同一額で一括指定（互換用）
+tax_year: 2025                # 令和7年分で計算（CLI --tax-year の代替）
 ```
 
 実行
@@ -111,16 +115,16 @@ small_business: 0            # 小規模企業共済
 python scripts/calc_furusato.py example.yml
 ```
 
-出力例（概算）
+出力例（概算・2025年分）
 ```text
 Total income (aggregate): 5410000
-Basic deduction (income tax): 480000
+Basic deduction (income tax): 630000
 Basic deduction (resident tax): 430000
-Taxable income (income tax): 3514000
+Taxable income (income tax): 3364000
 Taxable income (resident tax): 3564000
-Estimated income tax: 275300円
+Estimated income tax: 245300円
 Estimated resident tax (income portion): 356400円
-Approximate donation limit: 126300円
+Approximate donation limit: 120300円
 ```
 
 上記の意味

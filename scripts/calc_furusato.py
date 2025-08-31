@@ -134,6 +134,12 @@ def furusato_limit(taxable_it, taxable_rt):
 def main(path, tax_year: int):
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
+    # YAML内に tax_year があれば優先
+    if isinstance(data, dict) and 'tax_year' in data and data['tax_year']:
+        try:
+            tax_year = int(data['tax_year'])
+        except Exception:
+            pass
     taxable_it, taxable_rt, total_income, basic_it, basic_rt = calc_taxable_income_bases(data, tax_year)
     limit, it_amount, rt_amount = furusato_limit(taxable_it, taxable_rt)
     print(f'Total income (aggregate): {total_income:.0f}')
