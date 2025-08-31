@@ -18,33 +18,85 @@ function updateDependentFields() {
   document.getElementById('dcMatching').value = dcMatching;
 }
 
-// YAMLパターンファイル読み込み
+// 直接パターンデータ設定
+function loadPatternDirect() {
+  const select = document.getElementById('patternSelect');
+  if (!select.value) return;
+  
+  const patterns = {
+    'a': { salary: 3000000, side: 0, capital: 0, expense: 0, spouse: 0, ideco: 0, small: 0 },
+    'b': { salary: 4000000, side: 500000, capital: 0, expense: 0.3, spouse: 1000000, ideco: 276000, small: 0 },
+    'c': { salary: 5500000, side: 0, capital: 1000000, expense: 0, spouse: 0, ideco: 276000, small: 700000 },
+    'd': { salary: 8000000, side: 1200000, capital: 500000, expense: 0.4, spouse: 0, ideco: 276000, small: 840000 }
+  };
+  
+  const data = patterns[select.value];
+  if (!data) return;
+  
+  // 値設定
+  document.getElementById('salaryIncome').value = data.salary;
+  document.getElementById('sideIncome').value = data.side;
+  document.getElementById('capitalGains').value = data.capital;
+  document.getElementById('expenseRate').value = data.expense;
+  document.getElementById('spouseIncome').value = data.spouse;
+  document.getElementById('ideco').value = data.ideco;
+  document.getElementById('smallBusiness').value = data.small;
+  
+  // 従属フィールドを更新
+  updateDependentFields();
+  
+  console.log('Pattern loaded:', select.value);
+}
+
+// YAMLパターンファイル読み込み（バックアップ）
 async function loadPattern() {
   const select = document.getElementById('patternSelect');
   if (!select.value) return;
   
   try {
+    console.log('Loading pattern:', select.value);
     const response = await fetch(`data/${select.value}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
     const yamlText = await response.text();
+    console.log('YAML content:', yamlText);
+    
     const data = parseYaml(yamlText);
+    console.log('Parsed data:', data);
     
     // 基礎データ設定
-    document.getElementById('salaryIncome').value = data['給与収入'] || 0;
-    document.getElementById('sideIncome').value = data['副業収入'] || 0;
-    document.getElementById('capitalGains').value = data['投資差益'] || 0;
-    document.getElementById('expenseRate').value = data['経費率'] || 0;
-    document.getElementById('ideco').value = data['iDeCo拠出'] || 0;
-    document.getElementById('smallBusiness').value = data['小規模企業共済'] || 0;
+    const salaryInput = document.getElementById('salaryIncome');
+    const sideInput = document.getElementById('sideIncome');
+    const capitalInput = document.getElementById('capitalGains');
+    const expenseInput = document.getElementById('expenseRate');
+    const idecoInput = document.getElementById('ideco');
+    const smallBusinessInput = document.getElementById('smallBusiness');
+    const spouseIncomeInput = document.getElementById('spouseIncome');
+    
+    if (salaryInput) salaryInput.value = data['給与収入'] || 0;
+    if (sideInput) sideInput.value = data['副業収入'] || 0;
+    if (capitalInput) capitalInput.value = data['投資差益'] || 0;
+    if (expenseInput) expenseInput.value = data['経費率'] || 0;
+    if (idecoInput) idecoInput.value = data['iDeCo拠出'] || 0;
+    if (smallBusinessInput) smallBusinessInput.value = data['小規模企業共済'] || 0;
     
     // 配偶者情報から配偶者控除を逆算
     const spouseDeduction = data['配偶者控除'] || 0;
     const spouseIncome = spouseDeduction > 0 ? 1000000 : 0; // 103万以下と仮定
-    document.getElementById('spouseIncome').value = spouseIncome;
+    if (spouseIncomeInput) {
+      spouseIncomeInput.value = spouseIncome;
+    }
     
     // 従属フィールドを更新
     updateDependentFields();
     
+    console.log('Pattern loaded successfully');
+    
   } catch (error) {
+    console.error('Pattern loading failed:', error);
     alert('パターンファイルの読み込みに失敗しました: ' + error.message);
   }
 }
@@ -52,20 +104,18 @@ async function loadPattern() {
 // 簡易YAML解析
 function parseYaml(yamlText) {
   const data = {};
-  const lines = yamlText.split('\\n');
+  const lines = yamlText.split('\n');
   
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const colonIndex = trimmed.indexOf(':');
-      if (colonIndex !== -1) {
-        const key = trimmed.substring(0, colonIndex).trim();
-        const value = trimmed.substring(colonIndex + 1).trim();
-        data[key] = isNaN(Number(value)) ? value : Number(value);
-      }
+    if (trimmed && trimmed.includes(':') && !trimmed.startsWith('#')) {
+      const [key, value] = trimmed.split(':').map(s => s.trim());
+      const numValue = parseFloat(value);
+      data[key] = isNaN(numValue) ? value : numValue;
     }
   }
   
+  console.log('YAML parsed:', data);
   return data;
 }
 

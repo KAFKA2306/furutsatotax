@@ -23,6 +23,8 @@ MAPPING = {
     '経費率': 'expense_rate',
     '社会保険料': 'social_insurance',
     '基礎控除': 'basic_deduction',
+    '所得税の基礎控除': 'basic_deduction_income',
+    '住民税の基礎控除': 'basic_deduction_resident',
     'dcマッチング拠出': 'dc_matching',
     'iDeCo拠出': 'ideco',
     '小規模企業共済': 'small_business',
