@@ -28,6 +28,7 @@ MAPPING = {
     'dcマッチング拠出': 'dc_matching',
     'iDeCo拠出': 'ideco',
     '小規模企業共済': 'small_business',
+    '配偶者控除': 'spouse_deduction',
 }
 
 
