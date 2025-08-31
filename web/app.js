@@ -46,6 +46,7 @@ function loadPatternDirect() {
   updateDependentFields();
   
   console.log('Pattern loaded:', select.value);
+  console.log('Pattern data applied successfully');
 }
 
 // YAMLパターンファイル読み込み（バックアップ）
