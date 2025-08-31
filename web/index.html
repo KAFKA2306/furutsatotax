@@ -50,7 +50,7 @@
   
   <div class="pattern-section">
     <h3>🔄 クイック設定</h3>
-    <select id="patternSelect" onchange="loadPatternDirect()">
+    <select id="patternSelect">
       <option value="">パターンを選択してください</option>
       <option value="a">パターンA: 年収300万円（単身）</option>
       <option value="b">パターンB: 年収400万円（副業・配偶者あり）</option>
@@ -164,7 +164,7 @@
     </div>
   </div>
 
-  <button onclick="calculate()">💡 計算する</button>
+  <button id="calcButton">💡 計算する</button>
 
   <div id="result" class="result" style="display: none;">
     <h2>計算結果</h2>

@@ -2,6 +2,9 @@
 function updateDependentFields() {
   const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
   const spouseIncome = parseFloat(document.getElementById('spouseIncome').value) || 0;
+  const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
+  const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
+  const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
   
   // 法的根拠に基づく自動計算
   
@@ -16,6 +19,24 @@ function updateDependentFields() {
   // 3. dcマッチング拠出 - 確定拠出年金法第55条
   const dcMatching = Math.min(salaryIncome * 0.05, 660000);
   document.getElementById('dcMatching').value = dcMatching;
+
+  // 4. 基礎控除（所得税側の自動判定）- 合計所得金額に応じて縮小
+  try {
+    const salaryDed = salaryDeduction(salaryIncome);
+    const netSalaryIncome = Math.max(0, salaryIncome - salaryDed);
+    const netSideIncome = sideIncome * (1 - expenseRate);
+    const aggregateIncome = netSalaryIncome + netSideIncome + capitalGains;
+    let basic = 480000; // 〜2,400万円
+    if (aggregateIncome > 25_000_000) basic = 0;
+    else if (aggregateIncome > 24_500_000) basic = 160000;
+    else if (aggregateIncome > 24_000_000) basic = 320000;
+    const basicInput = document.getElementById('basicDeduction');
+    if (basicInput && basicInput.hasAttribute('readonly')) {
+      basicInput.value = basic;
+    }
+  } catch (e) {
+    // 何もしない（UIの簡易性を維持）
+  }
 }
 
 // 直接パターンデータ設定
@@ -250,7 +271,18 @@ function formatMoney(amount) {
   return amount.toLocaleString('ja-JP') + '円';
 }
 
-// 初期化時に従属フィールドを設定
+// 初期化時にイベントをバインド（CSP下でのinline禁止にも対応）
 document.addEventListener('DOMContentLoaded', function() {
+  const select = document.getElementById('patternSelect');
+  if (select) {
+    select.addEventListener('change', loadPatternDirect);
+  }
+  const calcButton = document.getElementById('calcButton');
+  if (calcButton) {
+    calcButton.addEventListener('click', function(e){
+      e.preventDefault();
+      calculate();
+    });
+  }
   updateDependentFields();
 });
