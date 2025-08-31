@@ -78,11 +78,11 @@ Approximate donation limit: 120300円
 ## MkDocs ドキュメント（制度解説）
 - 位置: `docs/` ディレクトリ（トップ: `docs/index.md`）
 - 概要ページ: `docs/DC制度解説.md`
-- 個別ページ: `docs/dc-matching.md`, `docs/ideco.md`, `docs/shokibo-kyosai.md`
+- 個別ページ: `docs/DCマッチング拠出.md`, `docs/個人型確定拠出年金_iDeCo.md`, `docs/小規模企業共済.md`
 - その他税制（概要）:
-  - 所得・住民税: `docs/tax-income.md`, `docs/tax-resident.md`
-  - 所得控除: `docs/deduction-basic.md`, `docs/deduction-social-insurance.md`, `docs/deduction-medical.md`, `docs/deductions-family.md`, `docs/deduction-insurance.md`
-  - 税額控除: `docs/credits-housing-loan.md`, `docs/deduction-donation.md`
+  - 所得・住民税: `docs/所得税の基本.md`, `docs/住民税の基本.md`
+  - 所得控除: `docs/基礎控除.md`, `docs/社会保険料控除.md`, `docs/医療費控除.md`, `docs/配偶者控除_扶養控除.md`, `docs/生命保険料控除等.md`
+  - 税額控除: `docs/住宅ローン控除.md`, `docs/寄附金控除_ふるさと納税.md`
 - 設定: `mkdocs.yml`
 
 ローカルでプレビューする場合（MkDocs がインストール済みであること）
