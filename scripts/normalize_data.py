@@ -29,6 +29,8 @@ MAPPING = {
     'iDeCo拠出': 'ideco',
     '小規模企業共済': 'small_business',
     '配偶者控除': 'spouse_deduction',
+    '年分': 'tax_year',
+    '税年': 'tax_year',
 }
 
 

@@ -50,6 +50,15 @@
   
   <div class="pattern-section">
     <h3>🔄 クイック設定</h3>
+    <div style="margin-bottom:10px">
+      <label for="taxYear" style="font-weight:bold;color:#4a5568">適用年分</label>
+      <select id="taxYear" style="margin-left:10px;">
+        <option value="2025" selected>令和7年分（2025）</option>
+        <option value="2026">令和8年分（2026）</option>
+        <option value="2027">令和9年分以後（2027〜）</option>
+        <option value="2024">令和6年分以前（従前）</option>
+      </select>
+    </div>
     <select id="patternSelect">
       <option value="">パターンを選択してください</option>
       <option value="a">パターンA: 年収300万円（単身）</option>
@@ -119,7 +128,7 @@
       <div class="field-group auto">
         <label for="basicDeduction">
           基礎控除 <span class="unit">（円）</span>
-          <div class="legal-basis">所得税法第86条 - 合計所得2400万以下</div>
+          <div class="legal-basis">所得税法第86条（令和7年度改正対応・自動判定）</div>
         </label>
         <input type="number" id="basicDeduction" value="480000" readonly>
       </div>

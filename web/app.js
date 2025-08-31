@@ -5,6 +5,7 @@ function updateDependentFields() {
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
   const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
   const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
+  const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
   
   // 法的根拠に基づく自動計算
   
@@ -20,16 +21,13 @@ function updateDependentFields() {
   const dcMatching = Math.min(salaryIncome * 0.05, 660000);
   document.getElementById('dcMatching').value = dcMatching;
 
-  // 4. 基礎控除（所得税側の自動判定）- 合計所得金額に応じて縮小
+  // 4. 基礎控除（所得税側の自動判定）- 合計所得金額と年分に応じて判定
   try {
     const salaryDed = salaryDeduction(salaryIncome);
     const netSalaryIncome = Math.max(0, salaryIncome - salaryDed);
     const netSideIncome = sideIncome * (1 - expenseRate);
     const aggregateIncome = netSalaryIncome + netSideIncome + capitalGains;
-    let basic = 480000; // 〜2,400万円
-    if (aggregateIncome > 25_000_000) basic = 0;
-    else if (aggregateIncome > 24_500_000) basic = 160000;
-    else if (aggregateIncome > 24_000_000) basic = 320000;
+    const basic = computeBasicDeductionIncomeTax(aggregateIncome, taxYear);
     const basicInput = document.getElementById('basicDeduction');
     if (basicInput && basicInput.hasAttribute('readonly')) {
       basicInput.value = basic;
@@ -37,6 +35,28 @@ function updateDependentFields() {
   } catch (e) {
     // 何もしない（UIの簡易性を維持）
   }
+}
+
+// 所得税の基礎控除（簡易版・年分対応）
+function computeBasicDeductionIncomeTax(aggregateIncome, taxYear) {
+  if (taxYear >= 2025) {
+    if (aggregateIncome <= 1320000) return 950000;
+    if (taxYear <= 2026) {
+      if (aggregateIncome <= 3360000) return 880000;
+      if (aggregateIncome <= 4890000) return 680000;
+      if (aggregateIncome <= 6550000) return 630000;
+    }
+    if (aggregateIncome <= 23500000) return 580000;
+    if (aggregateIncome <= 24000000) return 480000;
+    if (aggregateIncome <= 24500000) return 320000;
+    if (aggregateIncome <= 25000000) return 160000;
+    return 0;
+  }
+  // 〜2024年分（従前）
+  if (aggregateIncome <= 24000000) return 480000;
+  if (aggregateIncome <= 24500000) return 320000;
+  if (aggregateIncome <= 25000000) return 160000;
+  return 0;
 }
 
 // 直接パターンデータ設定
@@ -278,6 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const select = document.getElementById('patternSelect');
   if (select) {
     select.addEventListener('change', loadPatternDirect);
+  }
+  const yearSel = document.getElementById('taxYear');
+  if (yearSel) {
+    yearSel.addEventListener('change', updateDependentFields);
   }
   const calcButton = document.getElementById('calcButton');
   if (calcButton) {
