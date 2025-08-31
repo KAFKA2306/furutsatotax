@@ -28,10 +28,16 @@ jobs:
           pip install mkdocs-material
       - name: Build MkDocs site
         run: mkdocs build
+      - name: Copy web files to deploy directory
+        run: |
+          mkdir -p deploy
+          cp -r web/* deploy/
+          # MkDocsサイトは /mkdocs/ サブディレクトリに配置
+          cp -r web/mkdocs/* deploy/mkdocs/ 2>/dev/null || true
       - uses: actions/configure-pages@v5
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: web
+          path: deploy
       - uses: actions/deploy-pages@v4

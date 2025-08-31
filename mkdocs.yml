@@ -4,6 +4,7 @@ site_dir: web/mkdocs
 theme:
   name: mkdocs
 nav:
+  - 計算ツールへ戻る: '../..'
   - ホーム: index.md
   - DC制度解説: DC制度解説.md
   - 各制度:
