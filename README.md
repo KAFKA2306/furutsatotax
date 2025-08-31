@@ -79,6 +79,10 @@ Approximate donation limit: 120300円
 - 位置: `docs/` ディレクトリ（トップ: `docs/index.md`）
 - 概要ページ: `docs/DC制度解説.md`
 - 個別ページ: `docs/dc-matching.md`, `docs/ideco.md`, `docs/shokibo-kyosai.md`
+- その他税制（概要）:
+  - 所得・住民税: `docs/tax-income.md`, `docs/tax-resident.md`
+  - 所得控除: `docs/deduction-basic.md`, `docs/deduction-social-insurance.md`, `docs/deduction-medical.md`, `docs/deductions-family.md`, `docs/deduction-insurance.md`
+  - 税額控除: `docs/credits-housing-loan.md`, `docs/deduction-donation.md`
 - 設定: `mkdocs.yml`
 
 ローカルでプレビューする場合（MkDocs がインストール済みであること）
