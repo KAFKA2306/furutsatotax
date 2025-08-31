@@ -9,5 +9,16 @@
   - [iDeCo](ideco.md)
   - [小規模企業共済](shokibo-kyosai.md)
 
-注意: 本サイトは一般的な情報提供を目的としています。制度・税制は改正される可能性があるため、最終判断は必ず公的資料・最新の法令や各制度の公式情報でご確認ください。
+## その他税制の要点
+- 体系の理解: [所得税の基本](tax-income.md) / [住民税の基本](tax-resident.md)
+- 所得控除:
+  - [基礎控除](deduction-basic.md)
+  - [社会保険料控除](deduction-social-insurance.md)
+  - [医療費控除](deduction-medical.md)
+  - [配偶者控除・扶養控除](deductions-family.md)
+  - [生命保険料控除等](deduction-insurance.md)
+- 税額控除:
+  - [住宅ローン控除](credits-housing-loan.md)
+  - [寄附金税額控除（ふるさと納税）](deduction-donation.md)
 
+注意: 本サイトは一般的な情報提供を目的としています。制度・税制は改正される可能性があるため、最終判断は必ず公的資料・最新の法令や各制度の公式情報でご確認ください。

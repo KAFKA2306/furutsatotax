@@ -19,67 +19,9 @@ https://kafka2306.github.io/furutsatotax/
  - 基礎控除（個人住民税）: 合計所得金額に応じて 43万円（〜2,400万円）/29万円（〜2,450万円）/15万円（〜2,500万円）/0円（超2,500万円）。
   - 参考: 総務省「個人住民税の基礎控除額の見直し等について」等の周知資料（例: https://www.soumu.go.jp/main_content/000667390.pdf）
 
-上記は公的機関の公開情報・法令の一般的枠組みを踏まえた要約です。最新の法改正や個別事情すべてを自動反映するものではありません。
-
 ## 制約・注意点
 - 簡易モデルです: 復興特別所得税、住民税の均等割・調整控除、住宅ローン控除、医療費控除、配当控除、配偶者（特別）控除、扶養控除等の多くの控除・税額控除は未考慮です。
 - 分離課税等は未対応: 株式・投資等の分離課税（申告分離・源泉分離）や損益通算の扱いは現実とは異なる可能性があります。
-- 自己負担2,000円の扱い: 出力する「上限目安」は“実質負担が約2,000円に収まる水準”を目標とした概算です。実際の控除額・上限は個別事情により変動します。
-- 端数処理: 上限目安は100円単位で切り捨てます。
-
-厳密な金額が必要な場合は、自治体や国税庁等の公式シミュレーターや専門家の確認を併用してください。本ドキュメントは一般的説明であり、法的助言ではありません。
-
-## 使い方
-
-### 1) 依存関係
-- Python 3.9+ を推奨
-- 追加ライブラリ: `PyYAML`
-  - インストール例: `pip install pyyaml`
-
-### 2) 入力データ（YAML）
-次の2通りの入力が可能です。
-- そのまま使用する（英字キーの「正規化済み」形式）
-- 日本語キーで用意し、`scripts/normalize_data.py` で正規化する
-
-正規化済みの英字キー（これらのキー名で YAML を用意すれば正規化は不要）
-- `salary_income`: 給与収入（円）
-- `side_income`: 副業収入（円）
-- `expense_rate`: 副業の経費率（0〜1、例: 0.3）
-- `capital_gains`: 投資差益（円、簡易合算）
-- `social_insurance`: 社会保険料控除（円）
-- `dc_matching`: DCマッチング拠出（小規模な上乗せ掛金等、所得控除扱い）（円）
-- `ideco`: iDeCo拠出（円）
-- `small_business`: 小規模企業共済掛金（円）
-- `basic_deduction_income`: 所得税の基礎控除（円）［省略時は自動計算］
-- `basic_deduction_resident`: 住民税の基礎控除（円）［省略時は自動計算］
-- `basic_deduction`: 上記2つを同一額で一括指定したい場合の互換キー（両税目に適用）
-- `tax_year`: 計算対象の年分（例: 2025/2026/2027）。CLI の `--tax-year` と同義で、指定がない場合は CLI の設定が使われます。
-
-日本語キー → 英字キーのマッピング（`scripts/normalize_data.py` が使用）
-- `給与収入` → `salary_income`
-- `副業収入` → `side_income`
-- `投資差益` → `capital_gains`
-- `経費率` → `expense_rate`（例: `30%` でも可）
-- `社会保険料` → `social_insurance`
-- `基礎控除` → `basic_deduction`
-- `所得税の基礎控除` → `basic_deduction_income`
-- `住民税の基礎控除` → `basic_deduction_resident`
-- `年分`/`税年` → `tax_year`
-- `dcマッチング拠出` → `dc_matching`
-- `iDeCo拠出` → `ideco`
-- `小規模企業共済` → `small_business`
-
-### 3) 日本語キーの入力を正規化（任意）
-```bash
-python scripts/normalize_data.py input_ja.yml normalized.yml
-```
-
-### 4) 上限目安の計算
-```bash
-python scripts/calc_furusato.py normalized.yml --tax-year 2025
-# もしくは、正規化済みの YAML を直接指定
-python scripts/calc_furusato.py input_en.yml --tax-year 2027
-```
 
 ## 計算ロジック（概要）
 - 合計所得金額（本ツールの定義）: `給与所得控除後の給与 + 副業収入×(1-経費率) + 投資差益`
@@ -132,10 +74,6 @@ Approximate donation limit: 120300円
 - Taxable income: 上記合計 −（社会保険料、iDeCo、基礎控除 等）
 - Approximate donation limit: 本ツールの簡易式で推定した上限目安（100円単位切捨て）
 
-## フォルダ構成（抜粋）
-- `scripts/calc_furusato.py`: 上限目安の計算スクリプト
-- `scripts/normalize_data.py`: 日本語キーの入力を正規化する補助スクリプト
-- `web/`: 簡易的なブラウザ UI（参考用）
 
 ## MkDocs ドキュメント（制度解説）
 - 位置: `docs/` ディレクトリ（トップ: `docs/index.md`）
@@ -153,6 +91,3 @@ mkdocs serve
 mkdocs build
 # site/ 以下に出力
 ```
-
-## 免責事項
-本ツールおよびドキュメントは一般的な情報提供のみを目的としており、法的・税務上の助言ではありません。実際の申告・控除の可否や金額は、最新の法令、自治体の運用、個別事情により異なります。最終判断は必ず公的資料や専門家の見解でご確認ください。

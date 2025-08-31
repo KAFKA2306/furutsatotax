@@ -66,9 +66,9 @@ function loadPatternDirect() {
   
   const patterns = {
     'a': { salary: 3000000, side: 0, capital: 0, expense: 0, spouse: 0, ideco: 0, small: 0 },
-    'b': { salary: 4000000, side: 500000, capital: 0, expense: 0.3, spouse: 1000000, ideco: 276000, small: 0 },
+    'b': { salary: 4000000, side: 500000, capital: 0, expense: 0.3, spouse: 1000000, ideco: 144000, small: 0 },
     'c': { salary: 5500000, side: 0, capital: 1000000, expense: 0, spouse: 0, ideco: 276000, small: 700000 },
-    'd': { salary: 8000000, side: 1200000, capital: 500000, expense: 0.4, spouse: 0, ideco: 276000, small: 840000 },
+    'd': { salary: 8000000, side: 1200000, capital: 500000, expense: 0.4, spouse: 0, ideco: 144000, small: 840000 },
     'e': { salary: 6000000, side: 0, capital: 0, expense: 0, spouse: 0, ideco: 0, small: 0 },
     'f': { salary: 7000000, side: 800000, capital: 200000, expense: 0.2, spouse: 1000000, ideco: 0, small: 400000 }
   };
