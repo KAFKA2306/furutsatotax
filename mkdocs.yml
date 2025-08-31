@@ -1,0 +1,16 @@
+site_name: 税制ガイド
+site_description: 私的年金制度と節税制度のまとめ
+theme:
+  name: mkdocs
+nav:
+  - ホーム: index.md
+  - DC制度解説: DC制度解説.md
+  - 各制度:
+      - DCマッチング拠出: dc-matching.md
+      - iDeCo: ideco.md
+      - 小規模企業共済: shokibo-kyosai.md
+markdown_extensions:
+  - admonition
+  - toc
+  - tables
+  - footnotes

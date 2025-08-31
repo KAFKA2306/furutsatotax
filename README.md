@@ -137,5 +137,22 @@ Approximate donation limit: 120300円
 - `scripts/normalize_data.py`: 日本語キーの入力を正規化する補助スクリプト
 - `web/`: 簡易的なブラウザ UI（参考用）
 
+## MkDocs ドキュメント（制度解説）
+- 位置: `docs/` ディレクトリ（トップ: `docs/index.md`）
+- 概要ページ: `docs/DC制度解説.md`
+- 個別ページ: `docs/dc-matching.md`, `docs/ideco.md`, `docs/shokibo-kyosai.md`
+- 設定: `mkdocs.yml`
+
+ローカルでプレビューする場合（MkDocs がインストール済みであること）
+```bash
+mkdocs serve
+# ブラウザで http://127.0.0.1:8000 を開く
+```
+静的サイトを出力する場合
+```bash
+mkdocs build
+# site/ 以下に出力
+```
+
 ## 免責事項
 本ツールおよびドキュメントは一般的な情報提供のみを目的としており、法的・税務上の助言ではありません。実際の申告・控除の可否や金額は、最新の法令、自治体の運用、個別事情により異なります。最終判断は必ず公的資料や専門家の見解でご確認ください。
