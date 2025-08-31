@@ -295,6 +295,117 @@ function formatMoney(amount) {
   return amount.toLocaleString('ja-JP') + '円';
 }
 
+// グラフ用データ生成関数
+function generateChartData() {
+  const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
+  const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
+  const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
+  const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
+  const spouseIncome = parseFloat(document.getElementById('spouseIncome').value) || 0;
+  const idecoAmount = parseFloat(document.getElementById('ideco').value) || 0;
+  const smallBusinessAmount = parseFloat(document.getElementById('smallBusiness').value) || 0;
+  
+  const salaryRange = [];
+  const taxWithoutDeductions = [];
+  const taxWithDeductions = [];
+  const dcMatchingEffects = [];
+  const idecoEffects = [];
+  const smallBusinessEffects = [];
+  const furusatoLimits = [];
+  const furusatoLimitsOriginal = [];
+  
+  // 給与収入レンジ：300万〜1200万円（50万円刻み）
+  for (let salary = 3000000; salary <= 12000000; salary += 500000) {
+    salaryRange.push(salary / 10000); // 万円単位で表示
+    
+    // 基本計算（制度適用なし）
+    const basicCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate, 
+                                           spouseIncome, 0, 0, 0, taxYear);
+    taxWithoutDeductions.push(basicCalc.totalTax);
+    furusatoLimitsOriginal.push(basicCalc.furusatoLimit);
+    
+    // DCマッチング満額適用
+    const dcMatching = Math.min(salary * 0.05, 660000);
+    const dcCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
+                                        spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+    
+    // 各制度の節税効果計算
+    dcMatchingEffects.push(basicCalc.totalTax - dcCalc.totalTax);
+    
+    // iDeCo効果（DCマッチング込み）
+    const idecoCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
+                                           spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+    idecoEffects.push(dcCalc.totalTax - idecoCalc.totalTax);
+    
+    // 小規模企業共済効果（DCマッチング+iDeCo込み）
+    const smallBusinessCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
+                                                   spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+    smallBusinessEffects.push(idecoCalc.totalTax - smallBusinessCalc.totalTax);
+    
+    taxWithDeductions.push(smallBusinessCalc.totalTax);
+    furusatoLimits.push(smallBusinessCalc.furusatoLimit);
+  }
+  
+  return {
+    labels: salaryRange,
+    datasets: {
+      taxWithoutDeductions,
+      taxWithDeductions,
+      dcMatchingEffects,
+      idecoEffects,
+      smallBusinessEffects,
+      furusatoLimits,
+      furusatoLimitsOriginal
+    }
+  };
+}
+
+// 給与収入に対する税額計算（内部関数）
+function calculateTaxForSalary(salaryIncome, sideIncome, capitalGains, expenseRate, spouseIncome, 
+                              dcMatching, ideco, smallBusiness, taxYear) {
+  // 所得計算
+  const salaryDeductionAmount = salaryDeductionForYear(salaryIncome, taxYear);
+  const netSalaryIncome = salaryIncome - salaryDeductionAmount;
+  const netSideIncome = sideIncome * (1 - expenseRate);
+  const totalIncome = netSalaryIncome + netSideIncome + capitalGains;
+  
+  // 控除計算
+  const socialInsurance = Math.floor(salaryIncome * 0.15);
+  const basicDeduction = computeBasicDeductionIncomeTax(totalIncome, taxYear);
+  const spouseDeduction = spouseIncome <= 1030000 && spouseIncome > 0 ? 380000 : 0;
+  const totalDeduction = socialInsurance + basicDeduction + spouseDeduction + dcMatching + ideco + smallBusiness;
+  
+  // 課税所得・税額計算
+  const taxableIncome = Math.max(0, totalIncome - totalDeduction);
+  const incomeTax = incomeTaxCalc(taxableIncome);
+  const residentTax = Math.floor(taxableIncome * 0.1);
+  const totalTax = incomeTax + residentTax;
+  
+  // ふるさと納税限度額
+  const furusatoLimit = Math.floor((totalTax * 0.2) / 1000) * 1000;
+  
+  return {
+    totalIncome,
+    taxableIncome,
+    incomeTax,
+    residentTax,
+    totalTax,
+    furusatoLimit
+  };
+}
+
+// Chart.js用カラーパレット
+const CHART_COLORS = {
+  primary: '#4299e1',
+  tax: '#e53e3e',
+  deduction: '#38a169',
+  furusato: '#9f7aea',
+  dcMatching: '#f56565',
+  ideco: '#48bb78',
+  smallBusiness: '#ed8936',
+  background: 'rgba(247, 250, 252, 0.8)'
+};
+
 // 初期化時にイベントをバインド（CSP下でのinline禁止にも対応）
 document.addEventListener('DOMContentLoaded', function() {
   const select = document.getElementById('patternSelect');
