@@ -1,3 +1,23 @@
+// 従属関係に基づく自動更新
+function updateDependentFields() {
+  const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
+  const spouseIncome = parseFloat(document.getElementById('spouseIncome').value) || 0;
+  
+  // 法的根拠に基づく自動計算
+  
+  // 1. 社会保険料（概算）- 厚生年金保険法
+  const socialInsurance = Math.floor(salaryIncome * 0.15);
+  document.getElementById('socialInsurance').value = socialInsurance;
+  
+  // 2. 配偶者控除 - 所得税法第83条
+  const spouseDeduction = spouseIncome <= 1030000 && spouseIncome > 0 ? 380000 : 0;
+  document.getElementById('spouseDeduction').value = spouseDeduction;
+  
+  // 3. dcマッチング拠出 - 確定拠出年金法第55条
+  const dcMatching = Math.min(salaryIncome * 0.05, 660000);
+  document.getElementById('dcMatching').value = dcMatching;
+}
+
 // YAMLパターンファイル読み込み
 async function loadPattern() {
   const select = document.getElementById('patternSelect');
@@ -8,17 +28,21 @@ async function loadPattern() {
     const yamlText = await response.text();
     const data = parseYaml(yamlText);
     
-    // フォームに値を設定
+    // 基礎データ設定
     document.getElementById('salaryIncome').value = data['給与収入'] || 0;
     document.getElementById('sideIncome').value = data['副業収入'] || 0;
     document.getElementById('capitalGains').value = data['投資差益'] || 0;
     document.getElementById('expenseRate').value = data['経費率'] || 0;
-    document.getElementById('socialInsurance').value = data['社会保険料'] || 0;
-    document.getElementById('basicDeduction').value = data['基礎控除'] || 480000;
-    document.getElementById('spouseDeduction').value = data['配偶者控除'] || 0;
-    document.getElementById('dcMatching').value = data['dcマッチング拠出'] || 0;
     document.getElementById('ideco').value = data['iDeCo拠出'] || 0;
     document.getElementById('smallBusiness').value = data['小規模企業共済'] || 0;
+    
+    // 配偶者情報から配偶者控除を逆算
+    const spouseDeduction = data['配偶者控除'] || 0;
+    const spouseIncome = spouseDeduction > 0 ? 1000000 : 0; // 103万以下と仮定
+    document.getElementById('spouseIncome').value = spouseIncome;
+    
+    // 従属フィールドを更新
+    updateDependentFields();
     
   } catch (error) {
     alert('パターンファイルの読み込みに失敗しました: ' + error.message);
@@ -28,7 +52,7 @@ async function loadPattern() {
 // 簡易YAML解析
 function parseYaml(yamlText) {
   const data = {};
-  const lines = yamlText.split('\n');
+  const lines = yamlText.split('\\n');
   
   for (const line of lines) {
     const trimmed = line.trim();
@@ -45,7 +69,7 @@ function parseYaml(yamlText) {
   return data;
 }
 
-// 給与所得控除計算（2023年税制）
+// 給与所得控除計算（所得税法第28条・2023年税制）
 function salaryDeduction(income) {
   if (income <= 1625000) return Math.max(550000, income * 0.4);
   if (income <= 1800000) return income * 0.4 + 100000;
@@ -55,7 +79,7 @@ function salaryDeduction(income) {
   return 1950000;
 }
 
-// 所得税計算（2023年税制）
+// 所得税計算（所得税法第89条・2023年税制）
 function incomeTaxCalc(taxableIncome) {
   const brackets = [
     [0, 0.05, 0],           // ~195万: 5%
@@ -88,7 +112,7 @@ function calculate() {
   const ideco = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusiness = parseFloat(document.getElementById('smallBusiness').value) || 0;
   
-  // dcマッチング拠出は給与の5%、年間66万円まで（2023年制度）
+  // dcマッチング拠出は法定上限で自動計算
   const dcMatching = Math.min(salaryIncome * 0.05, 660000);
 
   if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0) {
@@ -96,11 +120,14 @@ function calculate() {
     return;
   }
 
-  // 計算過程
+  // 最新の従属フィールドを更新
+  updateDependentFields();
+
+  // 計算過程（法的根拠付き）
   const steps = [];
   
   // 1. 各収入の所得計算
-  steps.push('■ 所得計算');
+  steps.push('■ 所得計算（所得税法第28条・第35条・第33条）');
   
   // 給与所得
   const salaryDeductionAmount = salaryDeduction(salaryIncome);
@@ -115,34 +142,31 @@ function calculate() {
     steps.push(`副業所得 = ${formatMoney(sideIncome)} × (1 - ${(expenseRate*100).toFixed(1)}%) = ${formatMoney(netSideIncome)}`);
   }
   
-  // 投資差益（申告分離課税として扱わない場合）
+  // 投資差益（総合課税）
   if (capitalGains > 0) {
-    steps.push(`投資差益 = ${formatMoney(capitalGains)}`);
+    steps.push(`投資差益 = ${formatMoney(capitalGains)} ※総合課税として計算`);
   }
   
   const totalIncome = netSalaryIncome + netSideIncome + capitalGains;
   steps.push(`合計所得 = ${formatMoney(totalIncome)}`);
   steps.push('');
 
-  // dcマッチングをフォームに表示
-  document.getElementById('dcMatching').value = dcMatching;
-  
-  // 2. 所得控除計算
+  // 2. 所得控除計算（各法的根拠付き）
   const totalDeduction = socialInsurance + basicDeduction + spouseDeduction + dcMatching + ideco + smallBusiness;
   
-  steps.push('■ 所得控除');
-  if (socialInsurance > 0) steps.push(`社会保険料控除: ${formatMoney(socialInsurance)}`);
-  if (basicDeduction > 0) steps.push(`基礎控除: ${formatMoney(basicDeduction)}`);
-  if (spouseDeduction > 0) steps.push(`配偶者控除: ${formatMoney(spouseDeduction)}`);
-  if (dcMatching > 0) steps.push(`dcマッチング: ${formatMoney(dcMatching)} (給与×5%、上陖66万)`);
-  if (ideco > 0) steps.push(`iDeCo: ${formatMoney(ideco)}`);
-  if (smallBusiness > 0) steps.push(`小規模企業共済: ${formatMoney(smallBusiness)}`);
+  steps.push('■ 所得控除（各種控除法に基づく）');
+  if (socialInsurance > 0) steps.push(`社会保険料控除: ${formatMoney(socialInsurance)} (厚生年金保険法)`);
+  if (basicDeduction > 0) steps.push(`基礎控除: ${formatMoney(basicDeduction)} (所得税法第86条)`);
+  if (spouseDeduction > 0) steps.push(`配偶者控除: ${formatMoney(spouseDeduction)} (所得税法第83条)`);
+  if (dcMatching > 0) steps.push(`dcマッチング: ${formatMoney(dcMatching)} (確定拠出年金法第55条)`);
+  if (ideco > 0) steps.push(`iDeCo: ${formatMoney(ideco)} (確定拠出年金法)`);
+  if (smallBusiness > 0) steps.push(`小規模企業共済: ${formatMoney(smallBusiness)} (小規模企業共済法)`);
   steps.push(`所得控除合計 = ${formatMoney(totalDeduction)}`);
   steps.push('');
 
   // 3. 課税所得計算
   const taxableIncome = Math.max(0, totalIncome - totalDeduction);
-  steps.push('■ 課税所得');
+  steps.push('■ 課税所得（所得税法第22条）');
   steps.push(`課税所得 = ${formatMoney(totalIncome)} - ${formatMoney(totalDeduction)} = ${formatMoney(taxableIncome)}`);
   steps.push('');
 
@@ -151,15 +175,15 @@ function calculate() {
   const residentTax = Math.floor(taxableIncome * 0.1); // 住民税10%（概算）
   const totalTax = incomeTax + residentTax;
   
-  steps.push('■ 税額計算');
-  steps.push(`所得税 = ${formatMoney(incomeTax)}`);
+  steps.push('■ 税額計算（所得税法第89条・地方税法第314条の2）');
+  steps.push(`所得税 = ${formatMoney(incomeTax)} (累進税率適用)`);
   steps.push(`住民税 = ${formatMoney(residentTax)} (課税所得×10%)`);
   steps.push(`税額合計 = ${formatMoney(totalTax)}`);
   steps.push('');
 
   // 5. ふるさと納税限度額計算
   const limit = Math.floor((totalTax * 0.2) / 1000) * 1000;
-  steps.push('■ ふるさと納税限度額');
+  steps.push('■ ふるさと納税限度額（地方税法第37条の2）');
   steps.push(`限度額 = ${formatMoney(totalTax)} × 20% = ${formatMoney(totalTax * 0.2)}`);
   steps.push(`→ 1000円単位切り下げ: ${formatMoney(limit)}`);
 
@@ -174,3 +198,8 @@ function calculate() {
 function formatMoney(amount) {
   return amount.toLocaleString('ja-JP') + '円';
 }
+
+// 初期化時に従属フィールドを設定
+document.addEventListener('DOMContentLoaded', function() {
+  updateDependentFields();
+});
