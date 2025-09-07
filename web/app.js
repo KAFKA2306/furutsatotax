@@ -531,21 +531,123 @@ let furusatoChart = null;
 // 3つのグラフを描画
 function renderCharts() {
   try {
-    if (typeof Chart === 'undefined') {
-      // Chart.js 未ロード時はグラフ描画をスキップ（計算結果表示は維持）
-      return;
-    }
     const data = generateChartData();
-    // 1. 税額比較グラフ（積み上げ棒グラフ）
-    renderTaxComparisonChart(data);
-    // 2. 節税効果グラフ（エリアグラフ）
-    renderSavingsEffectChart(data);
-    // 3. ふるさと納税限度額グラフ（線グラフ）
-    renderFurusatoChart(data);
+    if (typeof Chart !== 'undefined') {
+      // Chart.js が使える場合は従来どおり
+      renderTaxComparisonChart(data);
+      renderSavingsEffectChart(data);
+      renderFurusatoChart(data);
+    } else {
+      // フォールバック描画（簡易）
+      fallbackRenderTaxComparison(data);
+      fallbackRenderSavingsEffect(data);
+      fallbackRenderFurusato(data);
+    }
   } catch (e) {
     console.error('Chart rendering failed:', e);
-    // グラフ描画の失敗は致命的ではないため、黙ってスキップ
   }
+}
+
+// ===== Fallback simple charts (no external libs) =====
+function getCanvas2D(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const ctx = el.getContext ? el.getContext('2d') : null;
+  if (!ctx) return null;
+  // resize for clarity
+  el.width = el.clientWidth || 800;
+  el.height = el.clientHeight || 400;
+  return ctx;
+}
+
+function fallbackRenderTaxComparison(data) {
+  const ctx = getCanvas2D('taxComparisonChart');
+  if (!ctx) return;
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padding = 40;
+  const labels = data.labels;
+  const d1 = data.datasets.taxWithoutDeductions;
+  const d2 = data.datasets.taxWithDeductions;
+  const n = labels.length;
+  const maxVal = Math.max(1, ...d1, ...d2);
+  // axes
+  ctx.strokeStyle = '#333';
+  ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
+  const plotW = W - padding*2, plotH = H - padding*2;
+  const groupW = plotW / n;
+  const barW = groupW/3;
+  for (let i=0;i<n;i++){
+    const x0 = padding + i*groupW;
+    // d1
+    const h1 = (d1[i]/maxVal)*plotH;
+    ctx.fillStyle = CHART_COLORS.tax || '#e53e3e';
+    ctx.fillRect(x0 + barW*0.5, H - padding - h1, barW, h1);
+    // d2
+    const h2 = (d2[i]/maxVal)*plotH;
+    ctx.fillStyle = CHART_COLORS.deduction || '#38a169';
+    ctx.fillRect(x0 + barW*1.8, H - padding - h2, barW, h2);
+  }
+  ctx.fillStyle = '#555';
+  ctx.fillText('税額（相対比較・簡易）', padding, padding - 10);
+}
+
+function fallbackRenderSavingsEffect(data) {
+  const ctx = getCanvas2D('savingsEffectChart');
+  if (!ctx) return;
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padding = 40;
+  const a = data.datasets.dcMatchingEffects;
+  const b = data.datasets.idecoEffects;
+  const c = data.datasets.smallBusinessEffects;
+  const n = a.length;
+  const maxVal = Math.max(1, ...a, ...b, ...c);
+  const plotW = W - padding*2, plotH = H - padding*2;
+  function drawLine(arr, color){
+    ctx.strokeStyle = color; ctx.beginPath();
+    for (let i=0;i<n;i++){
+      const x = padding + (i/(n-1))*plotW;
+      const y = H - padding - (arr[i]/maxVal)*plotH;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = '#333';
+  ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
+  drawLine(a, CHART_COLORS.dcMatching || '#f56565');
+  drawLine(b, CHART_COLORS.ideco || '#48bb78');
+  drawLine(c, CHART_COLORS.smallBusiness || '#ed8936');
+  ctx.fillStyle = '#555'; ctx.fillText('年間節税額（相対比較・簡易）', padding, padding - 10);
+}
+
+function fallbackRenderFurusato(data) {
+  const ctx = getCanvas2D('furusatoChart');
+  if (!ctx) return;
+  const W = ctx.canvas.width, H = ctx.canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const padding = 40;
+  const a = data.datasets.furusatoLimitsOriginal;
+  const b = data.datasets.furusatoLimits;
+  const n = a.length;
+  const maxVal = Math.max(1, ...a, ...b);
+  const plotW = W - padding*2, plotH = H - padding*2;
+  function drawLine(arr, color){
+    ctx.strokeStyle = color; ctx.beginPath();
+    for (let i=0;i<n;i++){
+      const x = padding + (i/(n-1))*plotW;
+      const y = H - padding - (arr[i]/maxVal)*plotH;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = '#333';
+  ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
+  drawLine(a, '#cbd5e0');
+  drawLine(b, CHART_COLORS.furusato || '#9f7aea');
+  ctx.fillStyle = '#555'; ctx.fillText('ふるさと納税上限（相対比較・簡易）', padding, padding - 10);
 }
 
 // 1. 税額比較グラフ
