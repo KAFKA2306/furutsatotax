@@ -79,6 +79,14 @@ function loadPatternDirect() {
   document.getElementById('spouseIncome').value = data.spouse;
   document.getElementById('ideco').value = data.ideco;
   document.getElementById('smallBusiness').value = data.small;
+  const bizRev = document.getElementById('businessRevenue');
+  const bizExp = document.getElementById('businessExpenses');
+  if (bizRev) bizRev.value = 0;
+  if (bizExp) bizExp.value = 0;
+  const bookSel = document.getElementById('bookkeepingMethod');
+  if (bookSel) bookSel.value = 'none';
+  const etaxChk = document.getElementById('useETax');
+  if (etaxChk) etaxChk.checked = false;
   
   // 従属フィールドを更新
   updateDependentFields();
