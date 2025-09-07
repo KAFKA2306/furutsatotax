@@ -134,6 +134,10 @@ async function loadPattern() {
     const idecoInput = document.getElementById('ideco');
     const smallBusinessInput = document.getElementById('smallBusiness');
     const spouseIncomeInput = document.getElementById('spouseIncome');
+    const bizRevInput = document.getElementById('businessRevenue');
+    const bizExpInput = document.getElementById('businessExpenses');
+    const bookSel = document.getElementById('bookkeepingMethod');
+    const etaxChk = document.getElementById('useETax');
     
     if (salaryInput) salaryInput.value = data['給与収入'] || 0;
     if (sideInput) sideInput.value = data['副業収入'] || 0;
@@ -141,6 +145,18 @@ async function loadPattern() {
     if (expenseInput) expenseInput.value = data['経費率'] || 0;
     if (idecoInput) idecoInput.value = data['iDeCo拠出'] || 0;
     if (smallBusinessInput) smallBusinessInput.value = data['小規模企業共済'] || 0;
+    if (bizRevInput) bizRevInput.value = data['事業収入'] || 0;
+    if (bizExpInput) bizExpInput.value = data['事業経費'] || 0;
+    if (bookSel) {
+      const method = (data['記帳方法'] || 'none').toString();
+      if (method.includes('複')) bookSel.value = 'double';
+      else if (method.includes('簡')) bookSel.value = 'simple';
+      else bookSel.value = 'none';
+    }
+    if (etaxChk) {
+      const v = (data['e-Tax提出'] || '').toString().trim();
+      etaxChk.checked = ['1','true','yes','y','on','有','あり','提出'].includes(v.toLowerCase());
+    }
     
     // 配偶者情報から配偶者控除を逆算
     const spouseDeduction = data['配偶者控除'] || 0;

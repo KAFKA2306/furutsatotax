@@ -13,7 +13,10 @@ def parse_value(v):
     try:
         return int(s)
     except ValueError:
-        return float(s)
+        try:
+            return float(s)
+        except ValueError:
+            return v
 
 
 MAPPING = {
