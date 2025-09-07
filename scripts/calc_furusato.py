@@ -90,9 +90,21 @@ def calc_taxable_income_bases(d, tax_year: int):
     total_income = salary + side + business + capital
 
     # 所得控除（基礎控除以外）
+    # DCマッチング拠出（従業員分）の年額を厳密化（規約・法定上限に基づく）
+    dc_matching_value = d.get('dc_matching')
+    if dc_matching_value is None:
+        emp_monthly = float(d.get('employer_dc_monthly', 0) or 0)
+        has_db = d.get('has_db', False)
+        if not isinstance(has_db, bool):
+            has_db = str(has_db).strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+        months = int(d.get('dc_months', 12) or 12)
+        months = max(1, min(12, months))
+        stat_cap = 27500 if has_db else 55000
+        max_employee_monthly = max(0, min(emp_monthly, max(0, stat_cap - emp_monthly)))
+        dc_matching_value = int(max_employee_monthly * months)
     other_deductions = (
         d.get('social_insurance', 0)
-        + d.get('dc_matching', 0)
+        + dc_matching_value
         + d.get('ideco', 0)
         + d.get('small_business', 0)
     )

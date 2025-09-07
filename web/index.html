@@ -185,12 +185,34 @@
         <input type="number" id="spouseDeduction" readonly>
       </div>
       
-      <div class="field-group auto">
-        <label for="dcMatching">
-          dcマッチング拠出 <span class="unit">（円）</span>
-          <div class="legal-basis">確定拠出年金法第55条 - 給与×5%、上限66万</div>
+      <div class="field-group optional">
+        <label>
+          企業型DC（事業主拠出・マッチング）
+          <div class="legal-basis">確定拠出年金法第55条ほか（法定月額上限: 55,000円／DB併用時27,500円）</div>
         </label>
-        <input type="number" id="dcMatching" readonly>
+        <div class="input-subgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end">
+          <div>
+            <label for="employerDcMonthly">事業主拠出（月額） <span class="unit">（円）</span></label>
+            <input type="number" id="employerDcMonthly" placeholder="0" min="0" step="1000">
+          </div>
+          <div>
+            <label for="dcMonths">拠出対象月数 <span class="unit">（1〜12）</span></label>
+            <input type="number" id="dcMonths" placeholder="12" min="1" max="12" step="1" value="12">
+          </div>
+          <div>
+            <label for="hasDb">DB併用</label>
+            <div>
+              <input type="checkbox" id="hasDb"> 併用あり（上限27,500円/月）
+            </div>
+          </div>
+          <div>
+            <label for="dcMatching">従業員マッチング拠出（上限） <span class="unit">（円/年、自動）</span></label>
+            <input type="number" id="dcMatching" readonly>
+          </div>
+        </div>
+        <div class="legal-basis" style="margin-top:6px">
+          注: 従業員マッチング拠出は「事業主拠出≧従業員拠出」かつ「事業主＋従業員≦法定上限（月額）」の範囲。
+        </div>
       </div>
       
       <div class="field-group optional">

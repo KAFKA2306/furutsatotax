@@ -22,8 +22,18 @@ function updateDependentFields() {
   document.getElementById('spouseDeduction').value = spouseDeduction;
   
   // 3. dcマッチング拠出 - 確定拠出年金法第55条
-  const dcMatching = Math.min(salaryIncome * 0.05, 660000);
-  document.getElementById('dcMatching').value = dcMatching;
+  try {
+    const employerMonthly = parseFloat((document.getElementById('employerDcMonthly') || {}).value) || 0;
+    const hasDb = !!(document.getElementById('hasDb') || {}).checked;
+    const months = Math.max(1, Math.min(12, parseInt(((document.getElementById('dcMonths') || {}).value) || '12', 10)));
+    const statCap = hasDb ? 27500 : 55000; // 月額法定上限
+    const maxEmployeeMonthly = Math.max(0, Math.min(employerMonthly, Math.max(0, statCap - employerMonthly)));
+    const dcMatching = Math.floor(maxEmployeeMonthly * months);
+    const dcInput = document.getElementById('dcMatching');
+    if (dcInput) dcInput.value = dcMatching;
+  } catch(e) {
+    console.warn('dc matching auto failed:', e);
+  }
 
   // 4. 基礎控除（所得税側の自動判定）- 合計所得金額と年分に応じて判定
   try {
@@ -261,8 +271,8 @@ function calculate() {
     return 0;
   })();
   
-  // dcマッチング拠出は法定上限で自動計算
-  const dcMatching = Math.min(salaryIncome * 0.05, 660000);
+  // dcマッチング拠出（法定上限から自動算定済み値を使用）
+  const dcMatching = parseFloat((document.getElementById('dcMatching') || {}).value) || 0;
 
   if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0 && businessRevenue === 0) {
     alert('収入を入力してください');
@@ -388,6 +398,9 @@ function generateChartData() {
   const businessExpenses = parseFloat(document.getElementById('businessExpenses').value) || 0;
   const bookkeepingMethod = ((document.getElementById('bookkeepingMethod') || {}).value) || 'none';
   const useETax = !!(document.getElementById('useETax') || {}).checked;
+  const employerDcMonthly = parseFloat((document.getElementById('employerDcMonthly') || {}).value) || 0;
+  const hasDb = !!(document.getElementById('hasDb') || {}).checked;
+  const dcMonths = Math.max(1, Math.min(12, parseInt(((document.getElementById('dcMonths') || {}).value) || '12', 10)));
   const blueDeduction = (function(){
     if (bookkeepingMethod === 'double') return useETax ? 650000 : 550000;
     if (bookkeepingMethod === 'simple') return 100000;
@@ -416,7 +429,10 @@ function generateChartData() {
     furusatoLimitsOriginal.push(basicCalc.furusatoLimit);
     
     // DCマッチング満額適用
-    const dcMatching = Math.min(salary * 0.05, 660000);
+    // 従業員マッチングは規約・法定上限で決まる（給与連動ではない）
+    const statCap = hasDb ? 27500 : 55000;
+    const maxEmployeeMonthly = Math.max(0, Math.min(employerDcMonthly, Math.max(0, statCap - employerDcMonthly)));
+    const dcMatching = Math.floor(maxEmployeeMonthly * dcMonths);
     const dcCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
                                         spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     
