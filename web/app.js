@@ -486,16 +486,22 @@ let furusatoChart = null;
 
 // 3つのグラフを描画
 function renderCharts() {
-  const data = generateChartData();
-  
-  // 1. 税額比較グラフ（積み上げ棒グラフ）
-  renderTaxComparisonChart(data);
-  
-  // 2. 節税効果グラフ（エリアグラフ）
-  renderSavingsEffectChart(data);
-  
-  // 3. ふるさと納税限度額グラフ（線グラフ）
-  renderFurusatoChart(data);
+  try {
+    if (typeof Chart === 'undefined') {
+      // Chart.js 未ロード時はグラフ描画をスキップ（計算結果表示は維持）
+      return;
+    }
+    const data = generateChartData();
+    // 1. 税額比較グラフ（積み上げ棒グラフ）
+    renderTaxComparisonChart(data);
+    // 2. 節税効果グラフ（エリアグラフ）
+    renderSavingsEffectChart(data);
+    // 3. ふるさと納税限度額グラフ（線グラフ）
+    renderFurusatoChart(data);
+  } catch (e) {
+    console.error('Chart rendering failed:', e);
+    // グラフ描画の失敗は致命的ではないため、黙ってスキップ
+  }
 }
 
 // 1. 税額比較グラフ
