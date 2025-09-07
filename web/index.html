@@ -126,6 +126,22 @@
       </div>
       
       <div class="field-group optional">
+        <label for="businessRevenue">
+          事業収入 <span class="unit">（円）</span>
+          <div class="legal-basis">所得税法第27条（事業所得）</div>
+        </label>
+        <input type="number" id="businessRevenue" placeholder="0" min="0" step="10000">
+      </div>
+      
+      <div class="field-group optional">
+        <label for="businessExpenses">
+          事業経費 <span class="unit">（円）</span>
+          <div class="legal-basis">所得税法第37条（必要経費）</div>
+        </label>
+        <input type="number" id="businessExpenses" placeholder="0" min="0" step="10000">
+      </div>
+      
+      <div class="field-group optional">
         <label for="expenseRate">
           副業経費率 <span class="unit">（0-1）</span>
           <div class="legal-basis">所得税法第37条</div>
@@ -148,7 +164,7 @@
       <div class="field-group auto">
         <label for="basicDeduction">
           基礎控除 <span class="unit">（円）</span>
-          <div class="legal-basis">所得税法第86条（令和7年度改正対応・自動判定）</div>
+          <div class="legal-basis">所得税法第86条（現行制度・自動判定）</div>
         </label>
         <input type="number" id="basicDeduction" value="480000" readonly>
       </div>
@@ -191,6 +207,24 @@
           <div class="legal-basis">小規模企業共済法 - 年84万限度</div>
         </label>
         <input type="number" id="smallBusiness" placeholder="0" min="0" max="840000" step="10000">
+      </div>
+
+      <div class="field-group optional">
+        <label for="bookkeepingMethod">
+          青色申告（記帳方法）
+          <div class="legal-basis">所得税法第57条の2（複式:55万/簡易:10万、e-Tax等で65万）</div>
+        </label>
+        <select id="bookkeepingMethod">
+          <option value="none" selected>適用なし</option>
+          <option value="simple">簡易簿記（10万円控除）</option>
+          <option value="double">複式簿記（55万円控除）</option>
+        </select>
+        <div style="margin-top:8px">
+          <label style="font-weight:normal;color:#4a5568">
+            <input type="checkbox" id="useETax"> e-Tax提出（または電子帳簿保存）
+            <span class="legal-basis">※ 複式簿記と併用で65万円控除</span>
+          </label>
+        </div>
       </div>
     </div>
   </div>

@@ -39,23 +39,18 @@ function updateDependentFields() {
 
 // 所得税の基礎控除（簡易版・年分対応）
 function computeBasicDeductionIncomeTax(aggregateIncome, taxYear) {
-  if (taxYear >= 2025) {
-    if (aggregateIncome <= 1320000) return 950000;
-    if (taxYear <= 2026) {
-      if (aggregateIncome <= 3360000) return 880000;
-      if (aggregateIncome <= 4890000) return 680000;
-      if (aggregateIncome <= 6550000) return 630000;
-    }
-    if (aggregateIncome <= 23500000) return 580000;
-    if (aggregateIncome <= 24000000) return 480000;
-    if (aggregateIncome <= 24500000) return 320000;
-    if (aggregateIncome <= 25000000) return 160000;
-    return 0;
-  }
-  // 〜2024年分（従前）
+  // 現行制度（令和2年分以降）: 48万/32万/16万/0（閾値: 2400/2450/2500万円）
   if (aggregateIncome <= 24000000) return 480000;
   if (aggregateIncome <= 24500000) return 320000;
   if (aggregateIncome <= 25000000) return 160000;
+  return 0;
+}
+
+// 住民税の基礎控除（現行: 令和2年度以降）
+function computeBasicDeductionResidentTax(aggregateIncome) {
+  if (aggregateIncome <= 24000000) return 430000;
+  if (aggregateIncome <= 24500000) return 290000;
+  if (aggregateIncome <= 25000000) return 150000;
   return 0;
 }
 
@@ -165,12 +160,13 @@ function parseYaml(yamlText) {
 
 // 給与所得控除計算（簡易・年分対応）
 function salaryDeductionForYear(income, taxYear) {
-  const minFloor = (taxYear >= 2025) ? 650000 : 550000;
-  if (income <= 1625000) return Math.max(minFloor, income * 0.4);
-  if (income <= 1800000) return income * 0.4 + 100000;
-  if (income <= 3600000) return income * 0.3 + 280000;
-  if (income <= 6600000) return income * 0.2 + 640000;
-  if (income <= 8500000) return income * 0.1 + 1300000;
+  // 現行制度（令和2年分以降）
+  // 国税庁 No.1410 給与所得控除: 下限55万円、上限195万円
+  if (income <= 1625000) return Math.max(550000, income * 0.4);
+  if (income <= 1800000) return income * 0.4 - 100000;
+  if (income <= 3600000) return income * 0.3 + 80000;
+  if (income <= 6600000) return income * 0.2 + 440000;
+  if (income <= 8500000) return income * 0.1 + 1100000;
   return 1950000;
 }
 
@@ -195,23 +191,44 @@ function incomeTaxCalc(taxableIncome) {
   return 0;
 }
 
+function incomeTaxMarginalRate(taxableIncome) {
+  // 限界税率のみ返す（復興特別所得税は別途乗算）
+  if (taxableIncome > 40000000) return 0.45;
+  if (taxableIncome > 18000000) return 0.40;
+  if (taxableIncome > 9000000) return 0.33;
+  if (taxableIncome > 6950000) return 0.23;
+  if (taxableIncome > 3300000) return 0.20;
+  if (taxableIncome > 1950000) return 0.10;
+  if (taxableIncome > 0) return 0.05;
+  return 0;
+}
+
 function calculate() {
   const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
   // フォームから入力値取得
   const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
   const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
+  const businessRevenue = parseFloat(document.getElementById('businessRevenue').value) || 0;
+  const businessExpenses = parseFloat(document.getElementById('businessExpenses').value) || 0;
   const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
   const socialInsurance = parseFloat(document.getElementById('socialInsurance').value) || 0;
   const basicDeduction = parseFloat(document.getElementById('basicDeduction').value) || 480000;
   const spouseDeduction = parseFloat(document.getElementById('spouseDeduction').value) || 0;
   const ideco = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusiness = parseFloat(document.getElementById('smallBusiness').value) || 0;
+  const bookkeepingMethod = ((document.getElementById('bookkeepingMethod') || {}).value) || 'none';
+  const useETax = !!(document.getElementById('useETax') || {}).checked;
+  const blueDeductionBase = (function(){
+    if (bookkeepingMethod === 'double') return useETax ? 650000 : 550000;
+    if (bookkeepingMethod === 'simple') return 100000;
+    return 0;
+  })();
   
   // dcマッチング拠出は法定上限で自動計算
   const dcMatching = Math.min(salaryIncome * 0.05, 660000);
 
-  if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0) {
+  if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0 && businessRevenue === 0) {
     alert('収入を入力してください');
     return;
   }
@@ -238,12 +255,25 @@ function calculate() {
     steps.push(`副業所得 = ${formatMoney(sideIncome)} × (1 - ${(expenseRate*100).toFixed(1)}%) = ${formatMoney(netSideIncome)}`);
   }
   
+  // 事業所得（青色申告特別控除を適用）
+  const businessProfitPre = Math.max(0, businessRevenue - businessExpenses);
+  const blueApplied = Math.min(businessProfitPre, blueDeductionBase);
+  const businessIncome = businessProfitPre - blueApplied;
+  if (businessRevenue > 0 || businessExpenses > 0 || blueApplied > 0) {
+    steps.push(`事業所得（控除前）= ${formatMoney(Math.max(0, businessRevenue - businessExpenses))}`);
+    if (blueApplied > 0) {
+      const label = bookkeepingMethod === 'double' ? (useETax ? '65万円' : '55万円') : (bookkeepingMethod === 'simple' ? '10万円' : '0円');
+      steps.push(`青色申告特別控除: ${formatMoney(blueApplied)}（種別: ${label}／利益の範囲内で適用）`);
+    }
+    steps.push(`事業所得（控除後）= ${formatMoney(businessIncome)}`);
+  }
+
   // 投資差益（総合課税）
   if (capitalGains > 0) {
     steps.push(`投資差益 = ${formatMoney(capitalGains)} ※総合課税として計算`);
   }
   
-  const totalIncome = netSalaryIncome + netSideIncome + capitalGains;
+  const totalIncome = netSalaryIncome + netSideIncome + businessIncome + capitalGains;
   steps.push(`合計所得 = ${formatMoney(totalIncome)}`);
   steps.push('');
 
@@ -261,26 +291,36 @@ function calculate() {
   steps.push('');
 
   // 3. 課税所得計算
-  const taxableIncome = Math.max(0, totalIncome - totalDeduction);
-  steps.push('■ 課税所得（所得税法第22条）');
-  steps.push(`課税所得 = ${formatMoney(totalIncome)} - ${formatMoney(totalDeduction)} = ${formatMoney(taxableIncome)}`);
+  const basicResident = computeBasicDeductionResidentTax(totalIncome);
+  const totalDeductionIT = totalDeduction; // 表示用（所得税側の基礎控除）
+  const totalDeductionRT = socialInsurance + basicResident + spouseDeduction + dcMatching + ideco + smallBusiness;
+  const taxableIncomeIT = Math.max(0, totalIncome - totalDeductionIT);
+  const taxableIncomeRT = Math.max(0, totalIncome - totalDeductionRT);
+  steps.push('■ 課税所得（所得税法第22条・住民税は所得割ベース）');
+  steps.push(`課税所得（所得税）= ${formatMoney(totalIncome)} - ${formatMoney(totalDeductionIT)} = ${formatMoney(taxableIncomeIT)}`);
+  steps.push(`課税所得（住民税）= ${formatMoney(totalIncome)} - ${formatMoney(totalDeductionRT)} = ${formatMoney(taxableIncomeRT)}`);
   steps.push('');
 
   // 4. 税額計算
-  const incomeTax = incomeTaxCalc(taxableIncome);
-  const residentTax = Math.floor(taxableIncome * 0.1); // 住民税10%（概算）
+  const incomeTax = incomeTaxCalc(taxableIncomeIT);
+  const residentTax = Math.floor(taxableIncomeRT * 0.1); // 住民税10%（概算）
   const totalTax = incomeTax + residentTax;
   
   steps.push('■ 税額計算（所得税法第89条・地方税法第314条の2）');
   steps.push(`所得税 = ${formatMoney(incomeTax)} (累進税率適用)`);
-  steps.push(`住民税 = ${formatMoney(residentTax)} (課税所得×10%)`);
+  steps.push(`住民税 = ${formatMoney(residentTax)} (課税所得(住民税)×10%)`);
   steps.push(`税額合計 = ${formatMoney(totalTax)}`);
   steps.push('');
 
-  // 5. ふるさと納税限度額計算
-  const limit = Math.floor((totalTax * 0.2) / 1000) * 1000;
-  steps.push('■ ふるさと納税限度額（地方税法第37条の2）');
-  steps.push(`限度額 = ${formatMoney(totalTax)} × 20% = ${formatMoney(totalTax * 0.2)}`);
+  // 5. ふるさと納税限度額計算（近似式）
+  // 上限目安 ≒ {(住民税所得割額×20%) ÷ (90% − 所得税率×1.021)} + 2,000円
+  const rate = incomeTaxMarginalRate(taxableIncomeIT);
+  const denom = Math.max(0.01, 0.9 - rate * 1.021);
+  const approxLimit = (residentTax * 0.2) / denom + 2000;
+  const limit = Math.floor(approxLimit / 1000) * 1000;
+  steps.push('■ ふるさと納税限度額（地方税法第37条の2・近似）');
+  steps.push(`上限目安 ≒ (住民税所得割×20%) ÷ (90% − 所得税率×1.021) + 2,000円`);
+  steps.push(`= (${formatMoney(residentTax)}×20%) ÷ (90% − ${(rate*100).toFixed(0)}%×1.021) + 2,000円`);
   steps.push(`→ 1000円単位切り下げ: ${formatMoney(limit)}`);
 
   // 結果表示
@@ -308,6 +348,16 @@ function generateChartData() {
   const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
   const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
   const spouseIncome = parseFloat(document.getElementById('spouseIncome').value) || 0;
+  const businessRevenue = parseFloat(document.getElementById('businessRevenue').value) || 0;
+  const businessExpenses = parseFloat(document.getElementById('businessExpenses').value) || 0;
+  const bookkeepingMethod = ((document.getElementById('bookkeepingMethod') || {}).value) || 'none';
+  const useETax = !!(document.getElementById('useETax') || {}).checked;
+  const blueDeduction = (function(){
+    if (bookkeepingMethod === 'double') return useETax ? 650000 : 550000;
+    if (bookkeepingMethod === 'simple') return 100000;
+    return 0;
+  })();
+  const blueDeduction = parseFloat((document.getElementById('blueDeduction') || {}).value || 0) || 0;
   const idecoAmount = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusinessAmount = parseFloat(document.getElementById('smallBusiness').value) || 0;
   
@@ -326,26 +376,26 @@ function generateChartData() {
     
     // 基本計算（制度適用なし）
     const basicCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate, 
-                                           spouseIncome, 0, 0, 0, taxYear);
+                                           spouseIncome, 0, 0, 0, taxYear, businessRevenue, businessExpenses, blueDeduction);
     taxWithoutDeductions.push(basicCalc.totalTax);
     furusatoLimitsOriginal.push(basicCalc.furusatoLimit);
     
     // DCマッチング満額適用
     const dcMatching = Math.min(salary * 0.05, 660000);
     const dcCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
-                                        spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+                                        spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     
     // 各制度の節税効果計算
     dcMatchingEffects.push(basicCalc.totalTax - dcCalc.totalTax);
     
     // iDeCo効果（DCマッチング込み）
     const idecoCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
-                                           spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+                                           spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     idecoEffects.push(dcCalc.totalTax - idecoCalc.totalTax);
     
     // 小規模企業共済効果（DCマッチング+iDeCo込み）
     const smallBusinessCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
-                                                   spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear);
+                                                   spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     smallBusinessEffects.push(idecoCalc.totalTax - smallBusinessCalc.totalTax);
     
     taxWithDeductions.push(smallBusinessCalc.totalTax);
@@ -368,31 +418,41 @@ function generateChartData() {
 
 // 給与収入に対する税額計算（内部関数）
 function calculateTaxForSalary(salaryIncome, sideIncome, capitalGains, expenseRate, spouseIncome, 
-                              dcMatching, ideco, smallBusiness, taxYear) {
+                              dcMatching, ideco, smallBusiness, taxYear,
+                              businessRevenue = 0, businessExpenses = 0, blueDeduction = 0) {
   // 所得計算
   const salaryDeductionAmount = salaryDeductionForYear(salaryIncome, taxYear);
   const netSalaryIncome = salaryIncome - salaryDeductionAmount;
   const netSideIncome = sideIncome * (1 - expenseRate);
-  const totalIncome = netSalaryIncome + netSideIncome + capitalGains;
+  const businessProfitPre = Math.max(0, businessRevenue - businessExpenses);
+  const blueApplied = Math.min(businessProfitPre, blueDeduction || 0);
+  const businessIncome = businessProfitPre - blueApplied;
+  const totalIncome = netSalaryIncome + netSideIncome + businessIncome + capitalGains;
   
   // 控除計算
   const socialInsurance = Math.floor(salaryIncome * 0.15);
-  const basicDeduction = computeBasicDeductionIncomeTax(totalIncome, taxYear);
+  const basicDeductionIT = computeBasicDeductionIncomeTax(totalIncome, taxYear);
+  const basicDeductionRT = computeBasicDeductionResidentTax(totalIncome);
   const spouseDeduction = spouseIncome <= 1030000 && spouseIncome > 0 ? 380000 : 0;
-  const totalDeduction = socialInsurance + basicDeduction + spouseDeduction + dcMatching + ideco + smallBusiness;
+  const totalDeductionIT = socialInsurance + basicDeductionIT + spouseDeduction + dcMatching + ideco + smallBusiness;
+  const totalDeductionRT = socialInsurance + basicDeductionRT + spouseDeduction + dcMatching + ideco + smallBusiness;
   
   // 課税所得・税額計算
-  const taxableIncome = Math.max(0, totalIncome - totalDeduction);
-  const incomeTax = incomeTaxCalc(taxableIncome);
-  const residentTax = Math.floor(taxableIncome * 0.1);
+  const taxableIncomeIT = Math.max(0, totalIncome - totalDeductionIT);
+  const taxableIncomeRT = Math.max(0, totalIncome - totalDeductionRT);
+  const incomeTax = incomeTaxCalc(taxableIncomeIT);
+  const residentTax = Math.floor(taxableIncomeRT * 0.1);
   const totalTax = incomeTax + residentTax;
   
-  // ふるさと納税限度額
-  const furusatoLimit = Math.floor((totalTax * 0.2) / 1000) * 1000;
+  // ふるさと納税限度額（近似式）
+  const rate = incomeTaxMarginalRate(taxableIncomeIT);
+  const denom = Math.max(0.01, 0.9 - rate * 1.021);
+  const approxLimit = (residentTax * 0.2) / denom + 2000;
+  const furusatoLimit = Math.floor(approxLimit / 1000) * 1000;
   
   return {
     totalIncome,
-    taxableIncome,
+    taxableIncome: taxableIncomeIT,
     incomeTax,
     residentTax,
     totalTax,

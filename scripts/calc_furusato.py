@@ -4,53 +4,34 @@ import yaml
 
 
 def salary_income_after_deduction(salary):
+    """給与所得控除後の給与（現行: 令和2年分以降）。
+    控除: 下限55万、上限195万。
+      〜162.5万: max(55万, 40%)
+      162.5万超〜180万: 40% − 10万
+      180万超〜360万: 30% + 8万
+      360万超〜660万: 20% + 44万
+      660万超〜850万: 10% + 110万
+      850万超: 195万
+    """
     if salary <= 1_625_000:
-        return max(0, salary - 550_000)
+        deduction = max(550_000, salary * 0.4)
     elif salary <= 1_800_000:
-        return salary * 0.6 - 100_000
+        deduction = salary * 0.4 - 100_000
     elif salary <= 3_600_000:
-        return salary * 0.7 - 180_000
+        deduction = salary * 0.3 + 80_000
     elif salary <= 6_600_000:
-        return salary * 0.8 - 540_000
+        deduction = salary * 0.2 + 440_000
     elif salary <= 8_500_000:
-        return salary * 0.9 - 1_200_000
+        deduction = salary * 0.1 + 1_100_000
     else:
-        return salary - 1_950_000
+        deduction = 1_950_000
+    return max(0, salary - deduction)
 
 
 def basic_deduction_income_tax(aggregate_income: int, tax_year: int) -> int:
-    """所得税の基礎控除の自動計算。
-    - 2024年分以前: 48万/32万/16万/0（閾値: 2400万/2450万/2500万）
-    - 2025〜2026年分: 95万/88万/68万/63万/58万（閾値: 132万/336万/489万/655万/2350万）
-                        2350万超は従前どおり 48万/32万/16万/0（2400/2450/2500万）
-    - 2027年分以後: 95万（〜132万）/58万（132万超〜2350万）/従前どおり（2350万超）
-    参照: 国税庁「令和7年度税制改正による所得税の基礎控除の見直し等について」
+    """所得税の基礎控除（現行: 令和2年分以降）
+    48万（〜2400万）/32万（〜2450万）/16万（〜2500万）/0。
     """
-    if tax_year >= 2025:
-        # 2025-2026 detailed bands, 2027+ flatten mid bands to 58万
-        if aggregate_income <= 1_320_000:
-            return 950_000
-        if tax_year <= 2026:
-            # R7〜R8: 88/68/63/58
-            if aggregate_income <= 3_360_000:
-                return 880_000
-            if aggregate_income <= 4_890_000:
-                return 680_000
-            if aggregate_income <= 6_550_000:
-                return 630_000
-        # R9以後 or R7〜R8の 655万超〜2350万以下: 58万
-        if aggregate_income <= 23_500_000:
-            return 580_000
-        # 2350万超は従前どおりの段階的縮小（48/32/16/0）
-        if aggregate_income <= 24_000_000:
-            return 480_000
-        if aggregate_income <= 24_500_000:
-            return 320_000
-        if aggregate_income <= 25_000_000:
-            return 160_000
-        return 0
-
-    # 〜2024年分（従前）
     if aggregate_income <= 24_000_000:
         return 480_000
     if aggregate_income <= 24_500_000:
@@ -79,7 +60,34 @@ def calc_taxable_income_bases(d, tax_year: int):
     salary = salary_income_after_deduction(d.get('salary_income', 0))
     side = d.get('side_income', 0) * (1 - d.get('expense_rate', 0))
     capital = d.get('capital_gains', 0)
-    total_income = salary + side + capital
+    # 事業所得
+    biz_rev = d.get('business_revenue', 0)
+    biz_exp = d.get('business_expenses', 0)
+    biz_profit_pre = max(0, biz_rev - biz_exp)
+    # 青色申告特別控除（数値が明示されていれば優先、なければ記帳方法とe-Taxから推定）
+    blue_spec = d.get('blue_deduction') or d.get('blue_deduction_amount')
+    if blue_spec is None:
+        method = str(d.get('bookkeeping_method', 'none')).lower()
+        etax_raw = d.get('use_etax', False)
+        etax = False
+        if isinstance(etax_raw, bool):
+            etax = etax_raw
+        else:
+            etax = str(etax_raw).strip().lower() in ('1', 'true', 'yes', 'y', 'on')
+        if method in ('double', '複式', '複式簿記'):
+            blue_spec = 650_000 if etax else 550_000
+        elif method in ('simple', '簡易', '簡易簿記'):
+            blue_spec = 100_000
+        else:
+            blue_spec = 0
+    else:
+        try:
+            blue_spec = int(blue_spec)
+        except Exception:
+            blue_spec = 0
+    blue_applied = min(biz_profit_pre, max(0, blue_spec))
+    business = biz_profit_pre - blue_applied
+    total_income = salary + side + business + capital
 
     # 所得控除（基礎控除以外）
     other_deductions = (
@@ -120,6 +128,24 @@ def income_tax(taxable):
     return 0
 
 
+def income_tax_marginal_rate(taxable):
+    if taxable > 40_000_000:
+        return 0.45
+    if taxable > 18_000_000:
+        return 0.40
+    if taxable > 9_000_000:
+        return 0.33
+    if taxable > 6_950_000:
+        return 0.23
+    if taxable > 3_300_000:
+        return 0.20
+    if taxable > 1_950_000:
+        return 0.10
+    if taxable > 0:
+        return 0.05
+    return 0.0
+
+
 def resident_tax(taxable):
     return taxable * 0.1
 
@@ -127,8 +153,11 @@ def resident_tax(taxable):
 def furusato_limit(taxable_it, taxable_rt):
     it = income_tax(taxable_it)
     rt = resident_tax(taxable_rt)
-    limit = (it + rt) * 0.2
-    return math.floor(limit / 100) * 100, it, rt
+    rate = income_tax_marginal_rate(taxable_it)
+    denom = max(0.01, 0.9 - rate * 1.021)
+    approx = (rt * 0.2) / denom + 2_000
+    limit = math.floor(approx / 100) * 100
+    return limit, it, rt
 
 
 def main(path, tax_year: int):
