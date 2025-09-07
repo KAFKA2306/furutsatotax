@@ -357,7 +357,6 @@ function generateChartData() {
     if (bookkeepingMethod === 'simple') return 100000;
     return 0;
   })();
-  const blueDeduction = parseFloat((document.getElementById('blueDeduction') || {}).value || 0) || 0;
   const idecoAmount = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusinessAmount = parseFloat(document.getElementById('smallBusiness').value) || 0;
   
