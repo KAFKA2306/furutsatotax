@@ -5,6 +5,10 @@ function updateDependentFields() {
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
   const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
   const expenseRate = parseFloat(document.getElementById('expenseRate').value) || 0;
+  const businessRevenue = parseFloat((document.getElementById('businessRevenue') || {}).value) || 0;
+  const businessExpenses = parseFloat((document.getElementById('businessExpenses') || {}).value) || 0;
+  const bookkeepingMethod = ((document.getElementById('bookkeepingMethod') || {}).value) || 'none';
+  const useETax = !!(document.getElementById('useETax') || {}).checked;
   const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
   
   // 法的根拠に基づく自動計算
@@ -26,14 +30,22 @@ function updateDependentFields() {
     const salaryDed = salaryDeductionForYear(salaryIncome, taxYear);
     const netSalaryIncome = Math.max(0, salaryIncome - salaryDed);
     const netSideIncome = sideIncome * (1 - expenseRate);
-    const aggregateIncome = netSalaryIncome + netSideIncome + capitalGains;
+    const bizProfitPre = Math.max(0, businessRevenue - businessExpenses);
+    const blueBase = (function(){
+      if (bookkeepingMethod === 'double') return useETax ? 650000 : 550000;
+      if (bookkeepingMethod === 'simple') return 100000;
+      return 0;
+    })();
+    const blueApplied = Math.min(bizProfitPre, blueBase);
+    const businessIncome = bizProfitPre - blueApplied;
+    const aggregateIncome = netSalaryIncome + netSideIncome + businessIncome + capitalGains;
     const basic = computeBasicDeductionIncomeTax(aggregateIncome, taxYear);
     const basicInput = document.getElementById('basicDeduction');
     if (basicInput && basicInput.hasAttribute('readonly')) {
       basicInput.value = basic;
     }
   } catch (e) {
-    // 何もしない（UIの簡易性を維持）
+    console.warn('updateDependentFields failed (non-fatal):', e);
   }
 }
 
@@ -781,6 +793,17 @@ document.addEventListener('DOMContentLoaded', function() {
       calculate();
     });
   }
+  // 入力変更で自動反映（主要フィールド）
+  const onInputIds = ['salaryIncome','sideIncome','capitalGains','expenseRate','spouseIncome','businessRevenue','businessExpenses'];
+  onInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateDependentFields);
+  });
+  const onChangeIds = ['bookkeepingMethod','useETax'];
+  onChangeIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateDependentFields);
+  });
   
   // グラフコントロールセットアップ
   setupChartControls();
