@@ -1,8 +1,6 @@
 import argparse
 import re
 import yaml
-
-
 def parse_value(v):
     if isinstance(v, (int, float)):
         return v
@@ -17,8 +15,6 @@ def parse_value(v):
             return float(s)
         except ValueError:
             return v
-
-
 MAPPING = {
     '給与収入': 'salary_income',
     '副業収入': 'side_income',
@@ -43,8 +39,6 @@ MAPPING = {
     '年分': 'tax_year',
     '税年': 'tax_year',
 }
-
-
 def normalize(input_path, output_path):
     with open(input_path, 'r', encoding='utf-8') as f:
         raw = yaml.safe_load(f)
@@ -54,8 +48,6 @@ def normalize(input_path, output_path):
         normalized[key] = parse_value(v)
     with open(output_path, 'w', encoding='utf-8') as f:
         yaml.safe_dump(normalized, f, allow_unicode=True, sort_keys=False)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Normalize tax input data')
     parser.add_argument('input')

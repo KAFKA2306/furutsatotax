@@ -1,7 +1,5 @@
-// Minimal UI simulation to reproduce auto-calculation without a browser
 const fs = require('fs');
 const vm = require('vm');
-
 class Element {
   constructor(id, value = '', readonly = false, type = 'input') {
     this.id = id;
@@ -14,10 +12,8 @@ class Element {
     return attr === 'readonly' ? !!this.readonly : false;
   }
   addEventListener() {
-    // no-op in simulation
   }
 }
-
 class DocumentMock {
   constructor() {
     this.map = new Map();
@@ -32,7 +28,6 @@ class DocumentMock {
   }
   addEventListener() { /* noop */ }
 }
-
 function setupScenario({
   salary = 6000000,
   side = 0,
@@ -46,7 +41,6 @@ function setupScenario({
   taxYear = 2025,
 }) {
   const document = new DocumentMock();
-  // inputs
   document.add('salaryIncome', String(salary));
   document.add('sideIncome', String(side));
   document.add('capitalGains', String(capital));
@@ -60,31 +54,26 @@ function setupScenario({
   etax.checked = !!useETax;
   const taxYearSel = document.add('taxYear', String(taxYear), false, 'select');
   taxYearSel.value = String(taxYear);
-  // outputs (auto)
   document.add('socialInsurance', '0', true);
   document.add('spouseDeduction', '0', true);
   document.add('dcMatching', '0', true);
   document.add('basicDeduction', '480000', true);
-  // result containers
   document.add('limit', '');
   document.add('breakdown', '');
   document.add('result', '');
   document.add('chartsSection', '');
   return document;
 }
-
 function loadApp(context) {
   const code = fs.readFileSync('web/app.js', 'utf8');
   vm.createContext(context);
   vm.runInContext(code, context);
 }
-
 function run() {
   const document = setupScenario({});
   const window = {};
   const context = { document, window, console };
   loadApp(context);
-  // call updateDependentFields
   if (typeof context.updateDependentFields !== 'function') {
     throw new Error('updateDependentFields not found');
   }
@@ -97,6 +86,4 @@ function run() {
   };
   console.log('AUTO_FIELDS', JSON.stringify(out));
 }
-
 run();
-

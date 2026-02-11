@@ -1,4 +1,3 @@
-// 従属関係に基づく自動更新
 function updateDependentFields() {
   const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
   const spouseIncome = parseFloat(document.getElementById('spouseIncome').value) || 0;
@@ -10,23 +9,15 @@ function updateDependentFields() {
   const bookkeepingMethod = ((document.getElementById('bookkeepingMethod') || {}).value) || 'none';
   const useETax = !!(document.getElementById('useETax') || {}).checked;
   const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
-  
-  // 法的根拠に基づく自動計算
-  
-  // 1. 社会保険料（概算）- 厚生年金保険法
   const socialInsurance = Math.floor(salaryIncome * 0.15);
   document.getElementById('socialInsurance').value = socialInsurance;
-  
-  // 2. 配偶者控除 - 所得税法第83条
   const spouseDeduction = spouseIncome <= 1030000 && spouseIncome > 0 ? 380000 : 0;
   document.getElementById('spouseDeduction').value = spouseDeduction;
-  
-  // 3. dcマッチング拠出 - 確定拠出年金法第55条
   try {
     const employerMonthly = parseFloat((document.getElementById('employerDcMonthly') || {}).value) || 0;
     const hasDb = !!(document.getElementById('hasDb') || {}).checked;
     const months = Math.max(1, Math.min(12, parseInt(((document.getElementById('dcMonths') || {}).value) || '12', 10)));
-    const statCap = hasDb ? 27500 : 55000; // 月額法定上限
+    const statCap = hasDb ? 27500 : 55000;
     const maxEmployeeMonthly = Math.max(0, Math.min(employerMonthly, Math.max(0, statCap - employerMonthly)));
     const dcMatching = Math.floor(maxEmployeeMonthly * months);
     const dcInput = document.getElementById('dcMatching');
@@ -34,8 +25,6 @@ function updateDependentFields() {
   } catch(e) {
     console.warn('dc matching auto failed:', e);
   }
-
-  // 4. 基礎控除（所得税側の自動判定）- 合計所得金額と年分に応じて判定
   try {
     const salaryDed = salaryDeductionForYear(salaryIncome, taxYear);
     const netSalaryIncome = Math.max(0, salaryIncome - salaryDed);
@@ -58,29 +47,21 @@ function updateDependentFields() {
     console.warn('updateDependentFields failed (non-fatal):', e);
   }
 }
-
-// 所得税の基礎控除（簡易版・年分対応）
 function computeBasicDeductionIncomeTax(aggregateIncome, taxYear) {
-  // 現行制度（令和2年分以降）: 48万/32万/16万/0（閾値: 2400/2450/2500万円）
   if (aggregateIncome <= 24000000) return 480000;
   if (aggregateIncome <= 24500000) return 320000;
   if (aggregateIncome <= 25000000) return 160000;
   return 0;
 }
-
-// 住民税の基礎控除（現行: 令和2年度以降）
 function computeBasicDeductionResidentTax(aggregateIncome) {
   if (aggregateIncome <= 24000000) return 430000;
   if (aggregateIncome <= 24500000) return 290000;
   if (aggregateIncome <= 25000000) return 150000;
   return 0;
 }
-
-// 直接パターンデータ設定
 function loadPatternDirect() {
   const select = document.getElementById('patternSelect');
   if (!select.value) return;
-  
   const patterns = {
     'a': { salary: 3000000, side: 0, capital: 0, expense: 0, spouse: 0, ideco: 0, small: 0 },
     'b': { salary: 4000000, side: 500000, capital: 0, expense: 0.3, spouse: 1000000, ideco: 144000, small: 0 },
@@ -89,11 +70,8 @@ function loadPatternDirect() {
     'e': { salary: 6000000, side: 0, capital: 0, expense: 0, spouse: 0, ideco: 0, small: 0 },
     'f': { salary: 7000000, side: 800000, capital: 200000, expense: 0.2, spouse: 1000000, ideco: 0, small: 400000 }
   };
-  
   const data = patterns[select.value];
   if (!data) return;
-  
-  // 値設定
   document.getElementById('salaryIncome').value = data.salary;
   document.getElementById('sideIncome').value = data.side;
   document.getElementById('capitalGains').value = data.capital;
@@ -109,34 +87,23 @@ function loadPatternDirect() {
   if (bookSel) bookSel.value = 'none';
   const etaxChk = document.getElementById('useETax');
   if (etaxChk) etaxChk.checked = false;
-  
-  // 従属フィールドを更新
   updateDependentFields();
-  
   console.log('Pattern loaded:', select.value);
   console.log('Pattern data applied successfully');
 }
-
-// YAMLパターンファイル読み込み（バックアップ）
 async function loadPattern() {
   const select = document.getElementById('patternSelect');
   if (!select.value) return;
-  
   try {
     console.log('Loading pattern:', select.value);
     const response = await fetch(`data/${select.value}`);
-    
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
     const yamlText = await response.text();
     console.log('YAML content:', yamlText);
-    
     const data = parseYaml(yamlText);
     console.log('Parsed data:', data);
-    
-    // 基礎データ設定
     const salaryInput = document.getElementById('salaryIncome');
     const sideInput = document.getElementById('sideIncome');
     const capitalInput = document.getElementById('capitalGains');
@@ -148,7 +115,6 @@ async function loadPattern() {
     const bizExpInput = document.getElementById('businessExpenses');
     const bookSel = document.getElementById('bookkeepingMethod');
     const etaxChk = document.getElementById('useETax');
-    
     if (salaryInput) salaryInput.value = data['給与収入'] || 0;
     if (sideInput) sideInput.value = data['副業収入'] || 0;
     if (capitalInput) capitalInput.value = data['投資差益'] || 0;
@@ -167,30 +133,21 @@ async function loadPattern() {
       const v = (data['e-Tax提出'] || '').toString().trim();
       etaxChk.checked = ['1','true','yes','y','on','有','あり','提出'].includes(v.toLowerCase());
     }
-    
-    // 配偶者情報から配偶者控除を逆算
     const spouseDeduction = data['配偶者控除'] || 0;
-    const spouseIncome = spouseDeduction > 0 ? 1000000 : 0; // 103万以下と仮定
+    const spouseIncome = spouseDeduction > 0 ? 1000000 : 0;
     if (spouseIncomeInput) {
       spouseIncomeInput.value = spouseIncome;
     }
-    
-    // 従属フィールドを更新
     updateDependentFields();
-    
     console.log('Pattern loaded successfully');
-    
   } catch (error) {
     console.error('Pattern loading failed:', error);
     alert('パターンファイルの読み込みに失敗しました: ' + error.message);
   }
 }
-
-// 簡易YAML解析
 function parseYaml(yamlText) {
   const data = {};
   const lines = yamlText.split('\n');
-  
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed && trimmed.includes(':') && !trimmed.startsWith('#')) {
@@ -199,15 +156,10 @@ function parseYaml(yamlText) {
       data[key] = isNaN(numValue) ? value : numValue;
     }
   }
-  
   console.log('YAML parsed:', data);
   return data;
 }
-
-// 給与所得控除計算（簡易・年分対応）
 function salaryDeductionForYear(income, taxYear) {
-  // 現行制度（令和2年分以降）
-  // 国税庁 No.1410 給与所得控除: 下限55万円、上限195万円
   if (income <= 1625000) return Math.max(550000, income * 0.4);
   if (income <= 1800000) return income * 0.4 - 100000;
   if (income <= 3600000) return income * 0.3 + 80000;
@@ -215,19 +167,16 @@ function salaryDeductionForYear(income, taxYear) {
   if (income <= 8500000) return income * 0.1 + 1100000;
   return 1950000;
 }
-
-// 所得税計算（所得税法第89条・2023年税制）
 function incomeTaxCalc(taxableIncome) {
   const brackets = [
-    [0, 0.05, 0],           // ~195万: 5%
-    [1950000, 0.1, 97500],  // ~330万: 10%
-    [3300000, 0.2, 427500], // ~695万: 20%
-    [6950000, 0.23, 636000], // ~900万: 23%
-    [9000000, 0.33, 1536000], // ~1800万: 33%
-    [18000000, 0.4, 2796000], // ~4000万: 40%
-    [40000000, 0.45, 4796000] // 4000万超: 45%
+    [0, 0.05, 0],
+    [1950000, 0.1, 97500],
+    [3300000, 0.2, 427500],
+    [6950000, 0.23, 636000],
+    [9000000, 0.33, 1536000],
+    [18000000, 0.4, 2796000],
+    [40000000, 0.45, 4796000]
   ];
-  
   for (let i = brackets.length - 1; i >= 0; i--) {
     const [threshold, rate, deduction] = brackets[i];
     if (taxableIncome > threshold) {
@@ -236,9 +185,7 @@ function incomeTaxCalc(taxableIncome) {
   }
   return 0;
 }
-
 function incomeTaxMarginalRate(taxableIncome) {
-  // 限界税率のみ返す（復興特別所得税は別途乗算）
   if (taxableIncome > 40000000) return 0.45;
   if (taxableIncome > 18000000) return 0.40;
   if (taxableIncome > 9000000) return 0.33;
@@ -248,10 +195,8 @@ function incomeTaxMarginalRate(taxableIncome) {
   if (taxableIncome > 0) return 0.05;
   return 0;
 }
-
 function calculate() {
   const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
-  // フォームから入力値取得
   const salaryIncome = parseFloat(document.getElementById('salaryIncome').value) || 0;
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
   const capitalGains = parseFloat(document.getElementById('capitalGains').value) || 0;
@@ -270,38 +215,23 @@ function calculate() {
     if (bookkeepingMethod === 'simple') return 100000;
     return 0;
   })();
-  
-  // dcマッチング拠出（法定上限から自動算定済み値を使用）
   const dcMatching = parseFloat((document.getElementById('dcMatching') || {}).value) || 0;
-
   if (salaryIncome === 0 && sideIncome === 0 && capitalGains === 0 && businessRevenue === 0) {
     alert('収入を入力してください');
     return;
   }
-
-  // 最新の従属フィールドを更新
   updateDependentFields();
-
-  // 計算過程（法的根拠付き）
   const steps = [];
-  
-  // 1. 各収入の所得計算
   steps.push('■ 所得計算（所得税法第28条・第35条・第33条）');
-  
-  // 給与所得
   const salaryDeductionAmount = salaryDeductionForYear(salaryIncome, taxYear);
   const netSalaryIncome = salaryIncome - salaryDeductionAmount;
   if (salaryIncome > 0) {
     steps.push(`給与所得 = ${formatMoney(salaryIncome)} - ${formatMoney(salaryDeductionAmount)} = ${formatMoney(netSalaryIncome)}`);
   }
-  
-  // 副業所得（雑所得）
   const netSideIncome = sideIncome * (1 - expenseRate);
   if (sideIncome > 0) {
     steps.push(`副業所得 = ${formatMoney(sideIncome)} × (1 - ${(expenseRate*100).toFixed(1)}%) = ${formatMoney(netSideIncome)}`);
   }
-  
-  // 事業所得（青色申告特別控除を適用）
   const businessProfitPre = Math.max(0, businessRevenue - businessExpenses);
   const blueApplied = Math.min(businessProfitPre, blueDeductionBase);
   const businessIncome = businessProfitPre - blueApplied;
@@ -313,19 +243,13 @@ function calculate() {
     }
     steps.push(`事業所得（控除後）= ${formatMoney(businessIncome)}`);
   }
-
-  // 投資差益（総合課税）
   if (capitalGains > 0) {
     steps.push(`投資差益 = ${formatMoney(capitalGains)} ※総合課税として計算`);
   }
-  
   const totalIncome = netSalaryIncome + netSideIncome + businessIncome + capitalGains;
   steps.push(`合計所得 = ${formatMoney(totalIncome)}`);
   steps.push('');
-
-  // 2. 所得控除計算（各法的根拠付き）
   const totalDeduction = socialInsurance + basicDeduction + spouseDeduction + dcMatching + ideco + smallBusiness;
-  
   steps.push('■ 所得控除（各種控除法に基づく）');
   if (socialInsurance > 0) steps.push(`社会保険料控除: ${formatMoney(socialInsurance)} (厚生年金保険法)`);
   if (basicDeduction > 0) steps.push(`基礎控除: ${formatMoney(basicDeduction)} (所得税法第86条)`);
@@ -335,10 +259,8 @@ function calculate() {
   if (smallBusiness > 0) steps.push(`小規模企業共済: ${formatMoney(smallBusiness)} (小規模企業共済法)`);
   steps.push(`所得控除合計 = ${formatMoney(totalDeduction)}`);
   steps.push('');
-
-  // 3. 課税所得計算
   const basicResident = computeBasicDeductionResidentTax(totalIncome);
-  const totalDeductionIT = totalDeduction; // 表示用（所得税側の基礎控除）
+  const totalDeductionIT = totalDeduction;
   const totalDeductionRT = socialInsurance + basicResident + spouseDeduction + dcMatching + ideco + smallBusiness;
   const taxableIncomeIT = Math.max(0, totalIncome - totalDeductionIT);
   const taxableIncomeRT = Math.max(0, totalIncome - totalDeductionRT);
@@ -346,20 +268,14 @@ function calculate() {
   steps.push(`課税所得（所得税）= ${formatMoney(totalIncome)} - ${formatMoney(totalDeductionIT)} = ${formatMoney(taxableIncomeIT)}`);
   steps.push(`課税所得（住民税）= ${formatMoney(totalIncome)} - ${formatMoney(totalDeductionRT)} = ${formatMoney(taxableIncomeRT)}`);
   steps.push('');
-
-  // 4. 税額計算
   const incomeTax = incomeTaxCalc(taxableIncomeIT);
-  const residentTax = Math.floor(taxableIncomeRT * 0.1); // 住民税10%（概算）
+  const residentTax = Math.floor(taxableIncomeRT * 0.1);
   const totalTax = incomeTax + residentTax;
-  
   steps.push('■ 税額計算（所得税法第89条・地方税法第314条の2）');
   steps.push(`所得税 = ${formatMoney(incomeTax)} (累進税率適用)`);
   steps.push(`住民税 = ${formatMoney(residentTax)} (課税所得(住民税)×10%)`);
   steps.push(`税額合計 = ${formatMoney(totalTax)}`);
   steps.push('');
-
-  // 5. ふるさと納税限度額計算（近似式）
-  // 上限目安 ≒ {(住民税所得割額×20%) ÷ (90% − 所得税率×1.021)} + 2,000円
   const rate = incomeTaxMarginalRate(taxableIncomeIT);
   const denom = Math.max(0.01, 0.9 - rate * 1.021);
   const approxLimit = (residentTax * 0.2) / denom + 2000;
@@ -368,26 +284,17 @@ function calculate() {
   steps.push(`上限目安 ≒ (住民税所得割×20%) ÷ (90% − 所得税率×1.021) + 2,000円`);
   steps.push(`= (${formatMoney(residentTax)}×20%) ÷ (90% − ${(rate*100).toFixed(0)}%×1.021) + 2,000円`);
   steps.push(`→ 1000円単位切り下げ: ${formatMoney(limit)}`);
-
-  // 結果表示
   document.getElementById('limit').textContent = `年間限度額: ${formatMoney(limit)}`;
   document.getElementById('breakdown').innerHTML = steps.map(step => 
     `<div class="step">${step}</div>`
   ).join('');
   document.getElementById('result').style.display = 'block';
-  
-  // グラフセクションを表示
   document.getElementById('chartsSection').style.display = 'block';
-  
-  // 初回グラフ描画
   renderCharts();
 }
-
 function formatMoney(amount) {
   return amount.toLocaleString('ja-JP') + '円';
 }
-
-// グラフ用データ生成関数
 function generateChartData() {
   const taxYear = parseInt((document.getElementById('taxYear') || {}).value || '2025', 10);
   const sideIncome = parseFloat(document.getElementById('sideIncome').value) || 0;
@@ -408,7 +315,6 @@ function generateChartData() {
   })();
   const idecoAmount = parseFloat(document.getElementById('ideco').value) || 0;
   const smallBusinessAmount = parseFloat(document.getElementById('smallBusiness').value) || 0;
-  
   const salaryRange = [];
   const taxWithoutDeductions = [];
   const taxWithDeductions = [];
@@ -417,42 +323,27 @@ function generateChartData() {
   const smallBusinessEffects = [];
   const furusatoLimits = [];
   const furusatoLimitsOriginal = [];
-  
-  // 給与収入レンジ：300万〜1200万円（50万円刻み）
   for (let salary = 3000000; salary <= 12000000; salary += 500000) {
-    salaryRange.push(salary / 10000); // 万円単位で表示
-    
-    // 基本計算（制度適用なし）
+    salaryRange.push(salary / 10000);
     const basicCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate, 
                                            spouseIncome, 0, 0, 0, taxYear, businessRevenue, businessExpenses, blueDeduction);
     taxWithoutDeductions.push(basicCalc.totalTax);
     furusatoLimitsOriginal.push(basicCalc.furusatoLimit);
-    
-    // DCマッチング満額適用
-    // 従業員マッチングは規約・法定上限で決まる（給与連動ではない）
     const statCap = hasDb ? 27500 : 55000;
     const maxEmployeeMonthly = Math.max(0, Math.min(employerDcMonthly, Math.max(0, statCap - employerDcMonthly)));
     const dcMatching = Math.floor(maxEmployeeMonthly * dcMonths);
     const dcCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
                                         spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
-    
-    // 各制度の節税効果計算
     dcMatchingEffects.push(basicCalc.totalTax - dcCalc.totalTax);
-    
-    // iDeCo効果（DCマッチング込み）
     const idecoCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
                                            spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     idecoEffects.push(dcCalc.totalTax - idecoCalc.totalTax);
-    
-    // 小規模企業共済効果（DCマッチング+iDeCo込み）
     const smallBusinessCalc = calculateTaxForSalary(salary, sideIncome, capitalGains, expenseRate,
                                                    spouseIncome, dcMatching, idecoAmount, smallBusinessAmount, taxYear, businessRevenue, businessExpenses, blueDeduction);
     smallBusinessEffects.push(idecoCalc.totalTax - smallBusinessCalc.totalTax);
-    
     taxWithDeductions.push(smallBusinessCalc.totalTax);
     furusatoLimits.push(smallBusinessCalc.furusatoLimit);
   }
-  
   return {
     labels: salaryRange,
     datasets: {
@@ -466,12 +357,9 @@ function generateChartData() {
     }
   };
 }
-
-// 給与収入に対する税額計算（内部関数）
 function calculateTaxForSalary(salaryIncome, sideIncome, capitalGains, expenseRate, spouseIncome, 
                               dcMatching, ideco, smallBusiness, taxYear,
                               businessRevenue = 0, businessExpenses = 0, blueDeduction = 0) {
-  // 所得計算
   const salaryDeductionAmount = salaryDeductionForYear(salaryIncome, taxYear);
   const netSalaryIncome = salaryIncome - salaryDeductionAmount;
   const netSideIncome = sideIncome * (1 - expenseRate);
@@ -479,28 +367,21 @@ function calculateTaxForSalary(salaryIncome, sideIncome, capitalGains, expenseRa
   const blueApplied = Math.min(businessProfitPre, blueDeduction || 0);
   const businessIncome = businessProfitPre - blueApplied;
   const totalIncome = netSalaryIncome + netSideIncome + businessIncome + capitalGains;
-  
-  // 控除計算
   const socialInsurance = Math.floor(salaryIncome * 0.15);
   const basicDeductionIT = computeBasicDeductionIncomeTax(totalIncome, taxYear);
   const basicDeductionRT = computeBasicDeductionResidentTax(totalIncome);
   const spouseDeduction = spouseIncome <= 1030000 && spouseIncome > 0 ? 380000 : 0;
   const totalDeductionIT = socialInsurance + basicDeductionIT + spouseDeduction + dcMatching + ideco + smallBusiness;
   const totalDeductionRT = socialInsurance + basicDeductionRT + spouseDeduction + dcMatching + ideco + smallBusiness;
-  
-  // 課税所得・税額計算
   const taxableIncomeIT = Math.max(0, totalIncome - totalDeductionIT);
   const taxableIncomeRT = Math.max(0, totalIncome - totalDeductionRT);
   const incomeTax = incomeTaxCalc(taxableIncomeIT);
   const residentTax = Math.floor(taxableIncomeRT * 0.1);
   const totalTax = incomeTax + residentTax;
-  
-  // ふるさと納税限度額（近似式）
   const rate = incomeTaxMarginalRate(taxableIncomeIT);
   const denom = Math.max(0.01, 0.9 - rate * 1.021);
   const approxLimit = (residentTax * 0.2) / denom + 2000;
   const furusatoLimit = Math.floor(approxLimit / 1000) * 1000;
-  
   return {
     totalIncome,
     taxableIncome: taxableIncomeIT,
@@ -510,8 +391,6 @@ function calculateTaxForSalary(salaryIncome, sideIncome, capitalGains, expenseRa
     furusatoLimit
   };
 }
-
-// Chart.js用カラーパレット
 const CHART_COLORS = {
   primary: '#4299e1',
   tax: '#e53e3e',
@@ -522,23 +401,17 @@ const CHART_COLORS = {
   smallBusiness: '#ed8936',
   background: 'rgba(247, 250, 252, 0.8)'
 };
-
-// グラフインスタンス保持用
 let taxComparisonChart = null;
 let savingsEffectChart = null;
 let furusatoChart = null;
-
-// 3つのグラフを描画
 function renderCharts() {
   try {
     const data = generateChartData();
     if (typeof Chart !== 'undefined') {
-      // Chart.js が使える場合は従来どおり
       renderTaxComparisonChart(data);
       renderSavingsEffectChart(data);
       renderFurusatoChart(data);
     } else {
-      // フォールバック描画（簡易）
       fallbackRenderTaxComparison(data);
       fallbackRenderSavingsEffect(data);
       fallbackRenderFurusato(data);
@@ -547,19 +420,15 @@ function renderCharts() {
     console.error('Chart rendering failed:', e);
   }
 }
-
-// ===== Fallback simple charts (no external libs) =====
 function getCanvas2D(id) {
   const el = document.getElementById(id);
   if (!el) return null;
   const ctx = el.getContext ? el.getContext('2d') : null;
   if (!ctx) return null;
-  // resize for clarity
   el.width = el.clientWidth || 800;
   el.height = el.clientHeight || 400;
   return ctx;
 }
-
 function fallbackRenderTaxComparison(data) {
   const ctx = getCanvas2D('taxComparisonChart');
   if (!ctx) return;
@@ -571,7 +440,6 @@ function fallbackRenderTaxComparison(data) {
   const d2 = data.datasets.taxWithDeductions;
   const n = labels.length;
   const maxVal = Math.max(1, ...d1, ...d2);
-  // axes
   ctx.strokeStyle = '#333';
   ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
   const plotW = W - padding*2, plotH = H - padding*2;
@@ -579,11 +447,9 @@ function fallbackRenderTaxComparison(data) {
   const barW = groupW/3;
   for (let i=0;i<n;i++){
     const x0 = padding + i*groupW;
-    // d1
     const h1 = (d1[i]/maxVal)*plotH;
     ctx.fillStyle = CHART_COLORS.tax || '#e53e3e';
     ctx.fillRect(x0 + barW*0.5, H - padding - h1, barW, h1);
-    // d2
     const h2 = (d2[i]/maxVal)*plotH;
     ctx.fillStyle = CHART_COLORS.deduction || '#38a169';
     ctx.fillRect(x0 + barW*1.8, H - padding - h2, barW, h2);
@@ -591,7 +457,6 @@ function fallbackRenderTaxComparison(data) {
   ctx.fillStyle = '#555';
   ctx.fillText('税額（相対比較・簡易）', padding, padding - 10);
 }
-
 function fallbackRenderSavingsEffect(data) {
   const ctx = getCanvas2D('savingsEffectChart');
   if (!ctx) return;
@@ -613,7 +478,6 @@ function fallbackRenderSavingsEffect(data) {
     }
     ctx.stroke();
   }
-  // axes
   ctx.strokeStyle = '#333';
   ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
   drawLine(a, CHART_COLORS.dcMatching || '#f56565');
@@ -621,7 +485,6 @@ function fallbackRenderSavingsEffect(data) {
   drawLine(c, CHART_COLORS.smallBusiness || '#ed8936');
   ctx.fillStyle = '#555'; ctx.fillText('年間節税額（相対比較・簡易）', padding, padding - 10);
 }
-
 function fallbackRenderFurusato(data) {
   const ctx = getCanvas2D('furusatoChart');
   if (!ctx) return;
@@ -642,23 +505,18 @@ function fallbackRenderFurusato(data) {
     }
     ctx.stroke();
   }
-  // axes
   ctx.strokeStyle = '#333';
   ctx.beginPath(); ctx.moveTo(padding, padding); ctx.lineTo(padding, H - padding); ctx.lineTo(W - padding, H - padding); ctx.stroke();
   drawLine(a, '#cbd5e0');
   drawLine(b, CHART_COLORS.furusato || '#9f7aea');
   ctx.fillStyle = '#555'; ctx.fillText('ふるさと納税上限（相対比較・簡易）', padding, padding - 10);
 }
-
-// 1. 税額比較グラフ
 function renderTaxComparisonChart(data) {
   const ctx = document.getElementById('taxComparisonChart');
   if (!ctx) return;
-  
   if (taxComparisonChart) {
     taxComparisonChart.destroy();
   }
-  
   taxComparisonChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -713,16 +571,12 @@ function renderTaxComparisonChart(data) {
     }
   });
 }
-
-// 2. 節税効果グラフ
 function renderSavingsEffectChart(data) {
   const ctx = document.getElementById('savingsEffectChart');
   if (!ctx) return;
-  
   if (savingsEffectChart) {
     savingsEffectChart.destroy();
   }
-  
   savingsEffectChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -787,16 +641,12 @@ function renderSavingsEffectChart(data) {
     }
   });
 }
-
-// 3. ふるさと納税限度額グラフ
 function renderFurusatoChart(data) {
   const ctx = document.getElementById('furusatoChart');
   if (!ctx) return;
-  
   if (furusatoChart) {
     furusatoChart.destroy();
   }
-  
   furusatoChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -854,53 +704,39 @@ function renderFurusatoChart(data) {
     }
   });
 }
-
-// グラフ表示制御
 function setupChartControls() {
-  // グラフ切り替えボタン
   document.getElementById('toggleTaxChart').addEventListener('click', function() {
     showChart('tax');
     updateToggleButtons('toggleTaxChart');
   });
-  
   document.getElementById('toggleSavingsChart').addEventListener('click', function() {
     showChart('savings');
     updateToggleButtons('toggleSavingsChart');
   });
-  
   document.getElementById('toggleFurusatoChart').addEventListener('click', function() {
     showChart('furusato');
     updateToggleButtons('toggleFurusatoChart');
   });
-  
-  // グラフ更新ボタン
   document.getElementById('updateCharts').addEventListener('click', function() {
     if (document.getElementById('chartsSection').style.display !== 'none') {
       renderCharts();
     }
   });
 }
-
 function showChart(chartType) {
-  // すべてのグラフコンテナを非表示
   document.getElementById('taxChartContainer').style.display = 'none';
   document.getElementById('savingsChartContainer').style.display = 'none';
   document.getElementById('furusatoChartContainer').style.display = 'none';
-  
-  // 選択されたグラフを表示
   const containers = {
     'tax': 'taxChartContainer',
     'savings': 'savingsChartContainer',
     'furusato': 'furusatoChartContainer'
   };
-  
   if (containers[chartType]) {
     document.getElementById(containers[chartType]).style.display = 'block';
   }
 }
-
 function updateToggleButtons(activeId) {
-  // すべてのトグルボタンを非アクティブに
   const buttons = ['toggleTaxChart', 'toggleSavingsChart', 'toggleFurusatoChart'];
   buttons.forEach(id => {
     const btn = document.getElementById(id);
@@ -909,8 +745,6 @@ function updateToggleButtons(activeId) {
     }
   });
 }
-
-// 初期化時にイベントをバインド（CSP下でのinline禁止にも対応）
 document.addEventListener('DOMContentLoaded', function() {
   const select = document.getElementById('patternSelect');
   if (select) {
@@ -927,7 +761,6 @@ document.addEventListener('DOMContentLoaded', function() {
       calculate();
     });
   }
-  // 入力変更で自動反映（主要フィールド）
   const onInputIds = ['salaryIncome','sideIncome','capitalGains','expenseRate','spouseIncome','businessRevenue','businessExpenses'];
   onInputIds.forEach(id => {
     const el = document.getElementById(id);
@@ -938,12 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', updateDependentFields);
   });
-  
-  // グラフコントロールセットアップ
   setupChartControls();
-  
-  // デフォルトで税額比較グラフを選択
   updateToggleButtons('toggleTaxChart');
-  
   updateDependentFields();
 });

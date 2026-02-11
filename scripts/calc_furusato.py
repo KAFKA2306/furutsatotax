@@ -1,8 +1,6 @@
 import argparse
 import math
 import yaml
-
-
 def salary_income_after_deduction(salary):
     """給与所得控除後の給与（現行: 令和2年分以降）。
     控除: 下限55万、上限195万。
@@ -26,8 +24,6 @@ def salary_income_after_deduction(salary):
     else:
         deduction = 1_950_000
     return max(0, salary - deduction)
-
-
 def basic_deduction_income_tax(aggregate_income: int, tax_year: int) -> int:
     """所得税の基礎控除（現行: 令和2年分以降）
     48万（〜2400万）/32万（〜2450万）/16万（〜2500万）/0。
@@ -39,8 +35,6 @@ def basic_deduction_income_tax(aggregate_income: int, tax_year: int) -> int:
     if aggregate_income <= 25_000_000:
         return 160_000
     return 0
-
-
 def basic_deduction_resident_tax(aggregate_income):
     """個人住民税の基礎控除（令和2年度以後）
     合計所得金額に応じて 43万/29万/15万/0 で段階的に縮小。
@@ -53,18 +47,13 @@ def basic_deduction_resident_tax(aggregate_income):
         return 150_000
     else:
         return 0
-
-
 def calc_taxable_income_bases(d, tax_year: int):
-    # 合計所得金額（給与所得控除後の給与 + 副業(経費差引後) + その他）
     salary = salary_income_after_deduction(d.get('salary_income', 0))
     side = d.get('side_income', 0) * (1 - d.get('expense_rate', 0))
     capital = d.get('capital_gains', 0)
-    # 事業所得
     biz_rev = d.get('business_revenue', 0)
     biz_exp = d.get('business_expenses', 0)
     biz_profit_pre = max(0, biz_rev - biz_exp)
-    # 青色申告特別控除（数値が明示されていれば優先、なければ記帳方法とe-Taxから推定）
     blue_spec = d.get('blue_deduction') or d.get('blue_deduction_amount')
     if blue_spec is None:
         method = str(d.get('bookkeeping_method', 'none')).lower()
@@ -88,9 +77,6 @@ def calc_taxable_income_bases(d, tax_year: int):
     blue_applied = min(biz_profit_pre, max(0, blue_spec))
     business = biz_profit_pre - blue_applied
     total_income = salary + side + business + capital
-
-    # 所得控除（基礎控除以外）
-    # DCマッチング拠出（従業員分）の年額を厳密化（規約・法定上限に基づく）
     dc_matching_value = d.get('dc_matching')
     if dc_matching_value is None:
         emp_monthly = float(d.get('employer_dc_monthly', 0) or 0)
@@ -108,9 +94,6 @@ def calc_taxable_income_bases(d, tax_year: int):
         + d.get('ideco', 0)
         + d.get('small_business', 0)
     )
-
-    # 基礎控除: 明示指定があれば優先。なければ自動計算。
-    # 互換性のため 'basic_deduction' が与えられたら両税目に同一額を適用。
     basic_override = d.get('basic_deduction')
     basic_it = d.get('basic_deduction_income', basic_override)
     basic_rt = d.get('basic_deduction_resident', basic_override)
@@ -118,12 +101,9 @@ def calc_taxable_income_bases(d, tax_year: int):
         basic_it = basic_deduction_income_tax(total_income, tax_year)
     if basic_rt is None:
         basic_rt = basic_deduction_resident_tax(total_income)
-
     taxable_it = max(0, total_income - other_deductions - basic_it)
     taxable_rt = max(0, total_income - other_deductions - basic_rt)
     return taxable_it, taxable_rt, total_income, basic_it, basic_rt
-
-
 def income_tax(taxable):
     brackets = [
         (0, 0.05, 0),
@@ -138,8 +118,6 @@ def income_tax(taxable):
         if taxable > thresh:
             return taxable * rate - deduction
     return 0
-
-
 def income_tax_marginal_rate(taxable):
     if taxable > 40_000_000:
         return 0.45
@@ -156,12 +134,8 @@ def income_tax_marginal_rate(taxable):
     if taxable > 0:
         return 0.05
     return 0.0
-
-
 def resident_tax(taxable):
     return taxable * 0.1
-
-
 def furusato_limit(taxable_it, taxable_rt):
     it = income_tax(taxable_it)
     rt = resident_tax(taxable_rt)
@@ -170,12 +144,9 @@ def furusato_limit(taxable_it, taxable_rt):
     approx = (rt * 0.2) / denom + 2_000
     limit = math.floor(approx / 100) * 100
     return limit, it, rt
-
-
 def main(path, tax_year: int):
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
-    # YAML内に tax_year があれば優先
     if isinstance(data, dict) and 'tax_year' in data and data['tax_year']:
         try:
             tax_year = int(data['tax_year'])
@@ -191,8 +162,6 @@ def main(path, tax_year: int):
     print(f'Estimated income tax: {it_amount:.0f}円')
     print(f'Estimated resident tax (income portion): {rt_amount:.0f}円')
     print(f'Approximate donation limit: {limit:.0f}円')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Calculate furusato donation limit (with basic deduction auto)')
     parser.add_argument('input', help='normalized YAML file (or raw via normalize_data.py)')
