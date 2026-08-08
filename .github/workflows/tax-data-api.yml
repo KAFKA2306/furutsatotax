@@ -26,12 +26,13 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Build API
         run: python scripts/build_tax_data_api.py --out public-api/v1
-      - name: Smoke test
+      - name: Smoke test and verify committed Pages distribution
         run: |
           python - <<'PY'
           import csv, hashlib, json
           from pathlib import Path
           p = Path('public-api/v1')
+          published = Path('docs/api/v1')
           manifest = json.loads((p / 'manifest.json').read_text())
           payload = json.loads((p / 'parameters.json').read_text())
           rows = list(csv.DictReader((p / 'parameters.csv').open()))
@@ -44,7 +45,9 @@ jobs:
               data = (p / name).read_bytes()
               assert len(data) == metadata['bytes']
               assert hashlib.sha256(data).hexdigest() == metadata['sha256']
-          print({'records': len(rows), 'tax_year': payload['tax_year']})
+          for name in ('parameters.json', 'parameters.csv', 'manifest.json'):
+              assert (p / name).read_bytes() == (published / name).read_bytes(), name
+          print({'records': len(rows), 'tax_year': payload['tax_year'], 'published_files': 3})
           PY
       - uses: actions/upload-artifact@v4
         with:
