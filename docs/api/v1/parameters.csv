@@ -1,0 +1,17 @@
+record_type,min_yen,max_yen,formula_or_rate,deduction_yen
+salary_income_rule,0,740999,0,
+salary_income_rule,741000,2190999,salary - 740000,
+salary_income_rule,2191000,2192999,1451000,
+salary_income_rule,2193000,2195999,1453000,
+salary_income_rule,2196000,2199999,1456000,
+salary_income_rule,2200000,3599999,floor(salary / 4 / 1000) * 1000 * 2.8 - 80000,
+salary_income_rule,3600000,6599999,floor(salary / 4 / 1000) * 1000 * 3.2 - 440000,
+salary_income_rule,6600000,8499999,salary * 0.9 - 1100000,
+salary_income_rule,8500000,,salary - 1950000,
+income_tax_bracket,1000,1949000,0.05,0
+income_tax_bracket,1950000,3299000,0.1,97500
+income_tax_bracket,3300000,6949000,0.2,427500
+income_tax_bracket,6950000,8999000,0.23,636000
+income_tax_bracket,9000000,17999000,0.33,1536000
+income_tax_bracket,18000000,39999000,0.4,2796000
+income_tax_bracket,40000000,,0.45,4796000
