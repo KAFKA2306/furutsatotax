@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "tax_year": 2026,
+  "generated_from": "data/official/nta-tax-parameters-2026.json",
+  "record_counts": {
+    "salary_income_rules": 9,
+    "income_tax_brackets": 7
+  },
+  "source_snapshot_sha256": "cedd7b1cfebcebdffd5bd9ed3b39adf97898f97fae16b68a77028a9026334e04",
+  "files": {
+    "parameters.json": {
+      "bytes": 3202,
+      "sha256": "7ccc929c20d0e531f66308d14c55a194b8675bb9f9d4432bedc16d1f19a14854"
+    },
+    "parameters.csv": {
+      "bytes": 859,
+      "sha256": "b305b6aca58007e2445bb7650c08afe4f2e02b5607ec1d233cbba74e48a406ea"
+    }
+  },
+  "retrieved_at": "2026-08-08T03:14:29Z",
+  "license": {
+    "name": "公共データ利用規約（第1.0版）",
+    "url": "https://www.nta.go.jp/chuijiko/copy.htm",
+    "attribution": "出典：国税庁ホームページ。KAFKA2306/furutsatotaxで機械可読形式に編集・加工。"
+  },
+  "cache": {
+    "strategy": "compare-manifest-sha256",
+    "max_age_seconds": 86400
+  }
+}
