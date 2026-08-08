@@ -7,32 +7,112 @@
     "employment_income_tax_free_threshold_example_yen": 1780000
   },
   "salary_income_rules": [
-    {"min_salary_yen": 0, "max_salary_yen": 740999, "formula": "0"},
-    {"min_salary_yen": 741000, "max_salary_yen": 2190999, "formula": "salary - 740000"},
-    {"min_salary_yen": 2191000, "max_salary_yen": 2192999, "formula": "1451000"},
-    {"min_salary_yen": 2193000, "max_salary_yen": 2195999, "formula": "1453000"},
-    {"min_salary_yen": 2196000, "max_salary_yen": 2199999, "formula": "1456000"},
-    {"min_salary_yen": 2200000, "max_salary_yen": 3599999, "formula": "floor(salary / 4 / 1000) * 1000 * 2.8 - 80000"},
-    {"min_salary_yen": 3600000, "max_salary_yen": 6599999, "formula": "floor(salary / 4 / 1000) * 1000 * 3.2 - 440000"},
-    {"min_salary_yen": 6600000, "max_salary_yen": 8499999, "formula": "salary * 0.9 - 1100000"},
-    {"min_salary_yen": 8500000, "max_salary_yen": null, "formula": "salary - 1950000"}
+    {
+      "min_salary_yen": 0,
+      "max_salary_yen": 740999,
+      "formula": "0"
+    },
+    {
+      "min_salary_yen": 741000,
+      "max_salary_yen": 2190999,
+      "formula": "salary - 740000"
+    },
+    {
+      "min_salary_yen": 2191000,
+      "max_salary_yen": 2192999,
+      "formula": "1451000"
+    },
+    {
+      "min_salary_yen": 2193000,
+      "max_salary_yen": 2195999,
+      "formula": "1453000"
+    },
+    {
+      "min_salary_yen": 2196000,
+      "max_salary_yen": 2199999,
+      "formula": "1456000"
+    },
+    {
+      "min_salary_yen": 2200000,
+      "max_salary_yen": 3599999,
+      "formula": "floor(salary / 4 / 1000) * 1000 * 2.8 - 80000"
+    },
+    {
+      "min_salary_yen": 3600000,
+      "max_salary_yen": 6599999,
+      "formula": "floor(salary / 4 / 1000) * 1000 * 3.2 - 440000"
+    },
+    {
+      "min_salary_yen": 6600000,
+      "max_salary_yen": 8499999,
+      "formula": "salary * 0.9 - 1100000"
+    },
+    {
+      "min_salary_yen": 8500000,
+      "max_salary_yen": null,
+      "formula": "salary - 1950000"
+    }
   ],
   "income_tax_brackets": [
-    {"min_taxable_income_yen": 1000, "max_taxable_income_yen": 1949000, "rate": 0.05, "deduction_yen": 0},
-    {"min_taxable_income_yen": 1950000, "max_taxable_income_yen": 3299000, "rate": 0.1, "deduction_yen": 97500},
-    {"min_taxable_income_yen": 3300000, "max_taxable_income_yen": 6949000, "rate": 0.2, "deduction_yen": 427500},
-    {"min_taxable_income_yen": 6950000, "max_taxable_income_yen": 8999000, "rate": 0.23, "deduction_yen": 636000},
-    {"min_taxable_income_yen": 9000000, "max_taxable_income_yen": 17999000, "rate": 0.33, "deduction_yen": 1536000},
-    {"min_taxable_income_yen": 18000000, "max_taxable_income_yen": 39999000, "rate": 0.4, "deduction_yen": 2796000},
-    {"min_taxable_income_yen": 40000000, "max_taxable_income_yen": null, "rate": 0.45, "deduction_yen": 4796000}
+    {
+      "min_taxable_income_yen": 1000,
+      "max_taxable_income_yen": 1949000,
+      "rate": 0.05,
+      "deduction_yen": 0
+    },
+    {
+      "min_taxable_income_yen": 1950000,
+      "max_taxable_income_yen": 3299000,
+      "rate": 0.1,
+      "deduction_yen": 97500
+    },
+    {
+      "min_taxable_income_yen": 3300000,
+      "max_taxable_income_yen": 6949000,
+      "rate": 0.2,
+      "deduction_yen": 427500
+    },
+    {
+      "min_taxable_income_yen": 6950000,
+      "max_taxable_income_yen": 8999000,
+      "rate": 0.23,
+      "deduction_yen": 636000
+    },
+    {
+      "min_taxable_income_yen": 9000000,
+      "max_taxable_income_yen": 17999000,
+      "rate": 0.33,
+      "deduction_yen": 1536000
+    },
+    {
+      "min_taxable_income_yen": 18000000,
+      "max_taxable_income_yen": 39999000,
+      "rate": 0.4,
+      "deduction_yen": 2796000
+    },
+    {
+      "min_taxable_income_yen": 40000000,
+      "max_taxable_income_yen": null,
+      "rate": 0.45,
+      "deduction_yen": 4796000
+    }
   ],
   "provenance": {
     "publisher": "国税庁",
     "retrieved_at": "2026-08-08T03:14:29Z",
     "sources": [
-      {"title": "給与所得者と税", "url": "https://www.nta.go.jp/publication/pamph/koho/kurashi/html/02_1.htm"},
-      {"title": "令和8年度税制改正による所得税の基礎控除の引上げ等について", "url": "https://www.nta.go.jp/users/gensen/2026kiso/index.htm"},
-      {"title": "利用規約・免責事項・著作権", "url": "https://www.nta.go.jp/chuijiko/copy.htm"}
+      {
+        "title": "給与所得者と税",
+        "url": "https://www.nta.go.jp/publication/pamph/koho/kurashi/html/02_1.htm"
+      },
+      {
+        "title": "令和8年度税制改正による所得税の基礎控除の引上げ等について",
+        "url": "https://www.nta.go.jp/users/gensen/2026kiso/index.htm"
+      },
+      {
+        "title": "利用規約・免責事項・著作権",
+        "url": "https://www.nta.go.jp/chuijiko/copy.htm"
+      }
     ],
     "license": {
       "name": "公共データ利用規約（第1.0版）",
