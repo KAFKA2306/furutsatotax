@@ -1,0 +1,47 @@
+name: Tax data API
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile
+        run: python -m compileall scripts tests
+      - name: Tests
+        run: python -m unittest discover -s tests -v
+      - name: Build API
+        run: python scripts/build_tax_data_api.py --out public-api/v1
+      - name: Smoke test
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          p = Path('public-api/v1')
+          manifest = json.loads((p / 'manifest.json').read_text())
+          payload = json.loads((p / 'parameters.json').read_text())
+          rows = list(csv.DictReader((p / 'parameters.csv').open()))
+          assert payload['tax_year'] == 2026
+          assert len(payload['salary_income_rules']) == 9
+          assert len(payload['income_tax_brackets']) == 7
+          assert len(rows) == 16
+          assert manifest['record_counts'] == {'salary_income_rules': 9, 'income_tax_brackets': 7}
+          print({'records': len(rows), 'tax_year': payload['tax_year']})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: furutsato-tax-data-api-v1
+          path: public-api/v1
+          retention-days: 30
