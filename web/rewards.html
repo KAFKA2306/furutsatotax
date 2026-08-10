@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026 ふるさと納税 単価比較 | KAFKA</title>
+  <style>
+    :root { --ink:#18212f; --muted:#667085; --line:#e4e7ec; --blue:#2563eb; --blue2:#eff6ff; --green:#067647; --green2:#ecfdf3; --bg:#f8fafc; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; color:var(--ink); background:var(--bg); }
+    a { color:inherit; }
+    .wrap { max-width:1080px; margin:0 auto; padding:28px 20px 64px; }
+    .top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+    .back { text-decoration:none; color:var(--blue); font-weight:700; }
+    .amazon { display:inline-block; text-decoration:none; background:#111827; color:#fff; padding:11px 15px; border-radius:10px; font-weight:800; }
+    .hero { background:#fff; border:1px solid var(--line); border-radius:18px; padding:28px; box-shadow:0 8px 30px rgba(16,24,40,.05); }
+    h1 { margin:0 0 10px; font-size:clamp(28px,4vw,44px); line-height:1.15; }
+    .lead { margin:0; color:var(--muted); font-size:17px; line-height:1.7; }
+    .rule { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:22px; }
+    .rule > div { padding:14px; border-radius:12px; background:var(--blue2); }
+    .rule b { display:block; margin-bottom:4px; }
+    .section { margin-top:28px; }
+    .section h2 { font-size:22px; margin:0 0 12px; }
+    .cards { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px; }
+    .card h3 { margin:0 0 6px; font-size:18px; }
+    .card p { margin:0 0 12px; color:var(--muted); line-height:1.6; }
+    .chips { display:flex; gap:7px; flex-wrap:wrap; margin:10px 0 14px; }
+    .chip { background:#f2f4f7; border-radius:999px; padding:5px 9px; font-size:12px; font-weight:700; color:#344054; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn { display:inline-block; border:1px solid var(--line); background:#fff; border-radius:9px; padding:9px 12px; font-weight:800; text-decoration:none; cursor:pointer; }
+    .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+    .calc { background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px; }
+    .grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:10px; align-items:end; }
+    label { display:block; font-size:12px; font-weight:800; color:#475467; margin-bottom:5px; }
+    input, select { width:100%; padding:10px; border:1px solid #d0d5dd; border-radius:8px; font:inherit; background:#fff; }
+    button { border:0; border-radius:9px; padding:11px 14px; background:var(--blue); color:#fff; font-weight:800; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; background:#fff; }
+    th, td { text-align:left; border-bottom:1px solid var(--line); padding:11px 9px; font-size:14px; }
+    th { color:#475467; font-size:12px; }
+    td.num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .best { color:var(--green); font-weight:900; }
+    .notice { margin-top:18px; padding:14px 16px; border-radius:12px; background:#fffaeb; color:#7a2e0e; line-height:1.6; font-size:13px; }
+    .source { margin-top:16px; color:var(--muted); font-size:12px; line-height:1.7; }
+    .source a { color:var(--blue); }
+    @media (max-width:760px) { .rule,.cards { grid-template-columns:1fr; } .grid { grid-template-columns:1fr 1fr; } .grid .wide { grid-column:1/-1; } .top { align-items:flex-start; flex-direction:column; } th:nth-child(3),td:nth-child(3) { display:none; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="index.html">← 限度額計算機へ</a>
+    <a class="amazon" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonふるさと納税を開く ↗</a>
+  </div>
+
+  <section class="hero">
+    <h1>寄附額ではなく、単価で選ぶ。</h1>
+    <p class="lead">2026年のふるさと納税を、日常で使う消耗品の置き換えとして比較するためのページです。容量違いを同じ物差しに直し、円/L・円/100g・円/食・円/個で比較します。</p>
+    <div class="rule">
+      <div><b>飲料</b>円/本 ＋ 円/L</div>
+      <div><b>食品</b>円/食 ＋ 円/100g</div>
+      <div><b>日用品</b>円/個・円/100g・円/L</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>まず探すカテゴリ</h2>
+    <div class="cards">
+      <article class="card"><h3>水・ミネラルウォーター</h3><p>500ml箱と2L箱は本数では比較せず、必ず円/Lへ換算。自宅用は2L、持ち出し用は500〜600mlで分けて見る。</p><div class="chips"><span class="chip">円/L</span><span class="chip">円/本</span><span class="chip">ケース飲料</span></div><div class="actions"><button type="button" onclick="copyTerm('天然水 ラベルレス')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+      <article class="card"><h3>緑茶・無糖茶</h3><p>500〜650mlと2Lを円/Lへ統一。ブランド差より、普段飲みとしての容量・ラベルレス・保管性を先に比較。</p><div class="chips"><span class="chip">円/L</span><span class="chip">円/本</span><span class="chip">無糖</span></div><div class="actions"><button type="button" onclick="copyTerm('緑茶 ラベルレス')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+      <article class="card"><h3>パックご飯</h3><p>1食のグラム数が違うため、円/食だけでなく円/100gを併記。150gと200gを同列にしない。</p><div class="chips"><span class="chip">円/食</span><span class="chip">円/100g</span><span class="chip">常温保存</span></div><div class="actions"><button type="button" onclick="copyTerm('パックご飯 国産米')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+      <article class="card"><h3>シリアル・グラノーラ</h3><p>袋数ではなく総重量から円/100gを算出。糖質オフなど栄養仕様が違う商品は別カテゴリとして扱う。</p><div class="chips"><span class="chip">円/100g</span><span class="chip">朝食</span></div><div class="actions"><button type="button" onclick="copyTerm('グラノーラ 糖質オフ')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+      <article class="card"><h3>コーヒー</h3><p>PET、ポーション、ドリップは用途が違うため別々に比較。PETは円/L、ドリップは円/杯。</p><div class="chips"><span class="chip">円/L</span><span class="chip">円/杯</span></div><div class="actions"><button type="button" onclick="copyTerm('コーヒー ペットボトル')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+      <article class="card"><h3>ティッシュ・シャンプー等</h3><p>箱数・袋数だけで判断せず、組数や内容量へ換算。日常的に現金購入する消耗品ほど優先度を上げる。</p><div class="chips"><span class="chip">円/箱</span><span class="chip">円/100g</span><span class="chip">円/L</span></div><div class="actions"><button type="button" onclick="copyTerm('日用品 ティッシュ シャンプー')">検索語をコピー</button><a class="btn primary" href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonで探す</a></div></article>
+    </div>
+  </section>
+
+  <section class="section calc">
+    <h2>単価比較メモ</h2>
+    <p class="lead" style="font-size:14px">Amazonふるさと納税で候補を見つけたら、寄附額・個数・1個あたり容量を入れてください。候補を追加すると安い順に並びます。</p>
+    <div class="grid">
+      <div class="wide"><label for="name">候補名</label><input id="name" placeholder="例: 天然水 500ml×24本"></div>
+      <div><label for="donation">寄附額（円）</label><input id="donation" type="number" min="1" placeholder="10000"></div>
+      <div><label for="count">個数/食数</label><input id="count" type="number" min="1" value="24"></div>
+      <div><label for="size">1個容量</label><input id="size" type="number" min="0" value="500"></div>
+      <div><label for="unit">容量単位</label><select id="unit"><option value="ml">ml</option><option value="g">g</option><option value="piece">個・食</option></select></div>
+    </div>
+    <button type="button" onclick="addRow()">比較に追加</button>
+    <div style="overflow:auto"><table id="resultTable"><thead><tr><th>候補</th><th>寄附額</th><th>総量</th><th>円/個・食</th><th>基準単価</th><th></th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <div class="notice">Amazon公式は、返礼品を強調したコンテンツから特定自治体・特定返礼品への寄附を強く誘導する構成について注意事項を示しています。そのため、この公開ページは比較ツールとAmazonふるさと納税の公式入口を提供し、特定自治体への寄附を勧誘しません。</div>
+  <div class="source">確認日: 2026-08-10。Amazonふるさと納税公式入口: <a href="https://www.amazon.co.jp/fmc/furusato" target="_blank" rel="noopener noreferrer">Amazonふるさと納税</a>。紹介方法・注意事項: <a href="https://affiliate.amazon.co.jp/help/node/topic/GGUQKMS5NAUD28XS" target="_blank" rel="noopener noreferrer">Amazonアソシエイト公式ヘルプ</a>。</div>
+</div>
+<script>
+  const rows = [];
+  function yen(n){ return new Intl.NumberFormat('ja-JP').format(Math.round(n)) + '円'; }
+  function copyTerm(term){ navigator.clipboard?.writeText(term); alert('検索語をコピーしました: ' + term); }
+  function addRow(){
+    const name = document.getElementById('name').value.trim() || '候補';
+    const donation = Number(document.getElementById('donation').value);
+    const count = Number(document.getElementById('count').value);
+    const size = Number(document.getElementById('size').value);
+    const unit = document.getElementById('unit').value;
+    if(!donation || !count || count <= 0){ alert('寄附額と個数を入力してください'); return; }
+    const perItem = donation / count;
+    let base = perItem, baseLabel = yen(base) + '/個・食', totalLabel = count + '個・食';
+    if(unit === 'ml' && size > 0){ const totalL = count * size / 1000; base = donation / totalL; baseLabel = yen(base) + '/L'; totalLabel = totalL.toFixed(2).replace(/\.00$/,'') + 'L'; }
+    if(unit === 'g' && size > 0){ const totalG = count * size; base = donation / (totalG / 100); baseLabel = yen(base) + '/100g'; totalLabel = new Intl.NumberFormat('ja-JP').format(totalG) + 'g'; }
+    rows.push({name,donation,count,size,unit,perItem,base,baseLabel,totalLabel}); render();
+  }
+  function removeRow(i){ rows.splice(i,1); render(); }
+  function render(){
+    rows.sort((a,b)=>a.base-b.base);
+    const body = document.querySelector('#resultTable tbody'); body.innerHTML='';
+    rows.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td class="${i===0?'best':''}">${i===0&&rows.length>1?'最安 ':''}${r.name}</td><td class="num">${yen(r.donation)}</td><td class="num">${r.totalLabel}</td><td class="num">${yen(r.perItem)}</td><td class="num ${i===0?'best':''}">${r.baseLabel}</td><td><button type="button" onclick="removeRow(${i})" style="padding:6px 9px;background:#667085">削除</button></td>`; body.appendChild(tr); });
+  }
+</script>
+</body>
+</html>
