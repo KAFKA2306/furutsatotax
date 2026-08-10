@@ -2,14 +2,18 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ふるさと納税限度額計算機</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
     h1 { color: #2d3748; margin: 0; }
-    .top-nav { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .nav-links { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
     .docs-link { color: #4299e1; text-decoration: none; font-weight: 600; }
     .docs-link:hover { text-decoration: underline; }
+    .unit-link { display:inline-block; color:white; background:#2563eb; text-decoration:none; font-weight:800; padding:10px 14px; border-radius:9px; }
+    .unit-link:hover { background:#1d4ed8; }
     .header-divider { border: none; border-bottom: 3px solid #4299e1; margin: 8px 0 16px; }
     
     .pattern-section { margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4299e1; }
@@ -48,6 +52,9 @@
     .highlight { font-size: 24px; font-weight: bold; color: #e53e3e; background: #fed7d7; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0; }
     .calculation { font-family: monospace; background: white; padding: 15px; border-radius: 4px; margin: 15px 0; line-height: 1.6; }
     .step { margin: 8px 0; }
+    .next-action { margin:20px 0; padding:18px; border:1px solid #bfdbfe; border-radius:12px; background:#eff6ff; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .next-action strong { display:block; margin-bottom:4px; color:#1e3a8a; }
+    .next-action span { color:#475569; font-size:14px; }
     
     .charts-section { margin: 40px 0; }
     .charts-section h2 { color: #2d3748; font-size: 24px; margin-bottom: 30px; border-bottom: 2px solid #4299e1; padding-bottom: 10px; }
@@ -59,17 +66,21 @@
     .chart-toggle { margin: 10px 5px; padding: 8px 12px; background: #4299e1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
     .chart-toggle.inactive { background: #e2e8f0; color: #718096; }
     .chart-toggle:hover { opacity: 0.8; }
+    @media (max-width:700px) { body { margin:16px auto; padding:14px; } .top-nav { align-items:flex-start; flex-direction:column; } .nav-links { justify-content:flex-start; } .input-section { grid-template-columns:1fr; gap:8px; } .next-action { align-items:flex-start; flex-direction:column; } }
   </style>
 </head>
 <body>
   <div class="top-nav">
     <h1>ふるさと納税限度額計算機</h1>
-    <a class="docs-link" href="mkdocs/">📚 解説・ドキュメント</a>
+    <div class="nav-links">
+      <a class="unit-link" href="rewards.html">2026 単価で返礼品を比較 →</a>
+      <a class="docs-link" href="mkdocs/">解説・ドキュメント</a>
+    </div>
   </div>
   <hr class="header-divider" />
   
   <div class="pattern-section">
-    <h3>🔄 クイック設定</h3>
+    <h3>クイック設定</h3>
     <div style="margin-bottom:10px">
       <label for="taxYear" style="font-weight:bold;color:#4a5568">適用年分</label>
       <select id="taxYear" style="margin-left:10px;">
@@ -99,7 +110,7 @@
 
   <div class="input-section">
     <div class="input-group">
-      <h3>💰 収入情報</h3>
+      <h3>収入情報</h3>
       
       <div class="field-group required">
         <label for="salaryIncome">
@@ -151,7 +162,7 @@
     </div>
 
     <div class="input-group">
-      <h3>📉 控除情報</h3>
+      <h3>控除情報</h3>
       
       <div class="field-group auto">
         <label for="socialInsurance">
@@ -251,7 +262,7 @@
     </div>
   </div>
 
-  <button id="calcButton">💡 計算する</button>
+  <button id="calcButton">計算する</button>
 
   <div id="result" class="result" style="display: none;">
     <h2>計算結果</h2>
@@ -259,8 +270,13 @@
     <div class="calculation" id="breakdown"></div>
   </div>
 
+  <div class="next-action">
+    <div><strong>上限を確認したら、次は単価比較</strong><span>飲料は円/L、食品は円/100g・円/食にそろえて比較します。</span></div>
+    <a class="unit-link" href="rewards.html">2026 単価比較へ →</a>
+  </div>
+
   <div id="chartsSection" class="charts-section" style="display: none;">
-    <h2>📊 給与収入別税額シミュレーション</h2>
+    <h2>給与収入別税額シミュレーション</h2>
     
     <div class="chart-controls">
       <div class="control-group">
@@ -270,7 +286,7 @@
         <button class="chart-toggle" id="toggleFurusatoChart">ふるさと納税</button>
       </div>
       <div class="control-group">
-        <button class="chart-toggle" id="updateCharts">📈 グラフを更新</button>
+        <button class="chart-toggle" id="updateCharts">グラフを更新</button>
       </div>
     </div>
     
