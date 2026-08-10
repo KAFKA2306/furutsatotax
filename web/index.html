@@ -73,41 +73,50 @@
         </select>
       </div>
       <div class="field">
-        <label for="totalIncome">総所得金額等（円）</label>
-        <input id="totalIncome" type="number" min="0" step="1" placeholder="8040732">
-        <div class="help">所得税基礎控除の判定と、寄附金基本控除30%上限の確認に使用。</div>
+        <label for="incomeTaxBasicDeduction">所得税の基礎控除額（円）</label>
+        <input id="incomeTaxBasicDeduction" type="number" min="0" step="1" placeholder="580000">
+        <div class="help">所得税の確定申告書・源泉徴収関係資料の実額。令和8年度以降の特例控除率判定に必要です。</div>
+      </div>
+      <div class="field">
+        <label for="totalIncome">総所得金額等（円・任意）</label>
+        <input id="totalIncome" type="number" min="0" step="1" placeholder="8000000">
+        <div class="help">分離課税所得等も含む「総所得金額等」が正確に分かる場合のみ入力。寄附金基本控除の30%上限確認にだけ使用します。</div>
       </div>
       <div class="field">
         <label for="taxableResidentGeneralIncome">課税総所得金額（円）</label>
-        <input id="taxableResidentGeneralIncome" type="number" min="0" step="1000" placeholder="6595000">
-        <div class="help">通知書の「課税総所得」等。特例控除率の判定に使用。</div>
+        <input id="taxableResidentGeneralIncome" type="number" min="0" step="1000" placeholder="6500000">
+        <div class="help">通知書の「課税総所得」等。通常ケースの特例控除率判定に使用。</div>
       </div>
       <div class="field">
         <label for="incomeLevyBeforeTaxCredits">税額控除前所得割額（円）</label>
-        <input id="incomeLevyBeforeTaxCredits" type="number" min="0" step="1" placeholder="398790">
+        <input id="incomeLevyBeforeTaxCredits" type="number" min="0" step="1" placeholder="400000">
         <div class="help">寄附金・住宅ローン等の税額控除を差し引く前の所得割額。</div>
       </div>
       <div class="field">
         <label for="adjustmentDeduction">調整控除額（円）</label>
         <input id="adjustmentDeduction" type="number" min="0" step="1" placeholder="2500">
-        <div class="help">市民税＋府県民税の合計。空欄にせず通知書の実額を入力。</div>
+        <div class="help">市民税＋府県民税の合計。通知書の実額を入力。</div>
       </div>
       <div class="field">
         <label for="humanDeductionDifference">所得税との人的控除額の差（円）</label>
         <input id="humanDeductionDifference" type="number" min="0" step="1" value="50000">
-        <div class="help">基礎控除のみなら通常5万円。配偶者・扶養等がある場合は差額を追加。</div>
+        <div class="help">基礎控除のみなら通常5万円。配偶者・扶養等がある場合は公式表に従って差額を合算。</div>
       </div>
       <div class="field">
         <label for="currentDonation">今年の寄附済額（円・任意）</label>
-        <input id="currentDonation" type="number" min="0" step="1" placeholder="110000">
+        <input id="currentDonation" type="number" min="0" step="1" placeholder="100000">
       </div>
       <div class="field">
-        <label for="specialRateOverride">特例控除率の上書き（任意）</label>
+        <label class="checkline"><input id="hasSpecialTaxationNotice" type="checkbox"> 山林・退職・土地建物・株式等の分離課税や課税特例がある</label>
+        <div class="help">大阪市公式は、この場合に通常の特例控除率表と異なる割合が適用されると明記しています。</div>
+      </div>
+      <div class="field">
+        <label for="specialRateOverride">特例控除率の上書き（%・任意）</label>
         <input id="specialRateOverride" type="number" min="0" max="100" step="0.001" placeholder="例: 69.58">
-        <div class="help">山林・退職・申告分離課税等で自治体から別割合を案内された場合のみ使用。</div>
+        <div class="help">上の分離課税等に該当する場合は、自治体等で確認した割合を入力しない限り計算を停止します。</div>
       </div>
     </div>
-    <div class="warning">株式等の申告分離課税があっても、通知書の税額控除前所得割額を使うことで20%上限の母数を実額化できます。ただし特例控除率が通常表と異なるケースでは、自治体確認値を「特例控除率の上書き」に入力してください。</div>
+    <div class="warning">通知書の実額で20%上限の母数は確定できます。一方、山林・退職・課税特例がある場合の「特例控除率」は通常表から自動決定しません。誤った率で上限を出すより、fail-closeします。</div>
     <button id="noticeCalc" class="calc" type="button">通知書実額で計算</button>
   </div>
 
