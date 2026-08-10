@@ -3,306 +3,182 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ふるさと納税限度額計算機</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js"></script>
+  <title>ふるさと納税 上限計算</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
-    h1 { color: #2d3748; margin: 0; }
-    .top-nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
-    .nav-links { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
-    .docs-link { color: #4299e1; text-decoration: none; font-weight: 600; }
-    .docs-link:hover { text-decoration: underline; }
-    .unit-link { display:inline-block; color:white; background:#2563eb; text-decoration:none; font-weight:800; padding:10px 14px; border-radius:9px; }
-    .unit-link:hover { background:#1d4ed8; }
-    .header-divider { border: none; border-bottom: 3px solid #4299e1; margin: 8px 0 16px; }
-    
-    .pattern-section { margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4299e1; }
-    .pattern-section h3 { margin: 0 0 15px 0; color: #2d3748; }
-    select { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 4px; font-size: 16px; background: white; }
-    
-    .input-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
-    .input-group { margin: 15px 0; }
-    .input-group h3 { color: #4a5568; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-    
-    .field-group { margin: 15px 0; padding: 10px; border-radius: 6px; }
-    .field-group.required { background: #fff5f5; border-left: 4px solid #e53e3e; }
-    .field-group.auto { background: #f0fff4; border-left: 4px solid #38a169; }
-    .field-group.optional { background: #f7fafc; border-left: 4px solid #718096; }
-    
-    label { display: block; font-weight: bold; margin: 5px 0; color: #4a5568; }
-    .legal-basis { font-size: 12px; color: #718096; font-weight: normal; }
-    input[type="number"], select { width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-    input[type="number"]:focus { border-color: #4299e1; outline: none; }
-    input[type="number"]:read-only { background-color: #f7fafc; color: #718096; }
-    .unit { font-size: 14px; color: #718096; margin-left: 5px; }
-    
-    .legend { margin: 20px 0; padding: 15px; background: #edf2f7; border-radius: 8px; }
-    .legend h4 { margin: 0 0 10px 0; color: #2d3748; }
-    .legend-item { display: inline-block; margin: 5px 10px 5px 0; }
-    .legend-color { width: 12px; height: 12px; display: inline-block; margin-right: 5px; border-radius: 2px; }
-    .required-color { background: #e53e3e; }
-    .auto-color { background: #38a169; }
-    .optional-color { background: #718096; }
-    
-    button { background: #4299e1; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin: 20px 0; }
-    button:hover { background: #3182ce; }
-    
-    .result { margin-top: 30px; padding: 20px; background: #edf2f7; border-radius: 8px; }
-    .result h2 { color: #2d3748; margin-top: 0; }
-    .highlight { font-size: 24px; font-weight: bold; color: #e53e3e; background: #fed7d7; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0; }
-    .calculation { font-family: monospace; background: white; padding: 15px; border-radius: 4px; margin: 15px 0; line-height: 1.6; }
-    .step { margin: 8px 0; }
-    .next-action { margin:20px 0; padding:18px; border:1px solid #bfdbfe; border-radius:12px; background:#eff6ff; display:flex; align-items:center; justify-content:space-between; gap:14px; }
-    .next-action strong { display:block; margin-bottom:4px; color:#1e3a8a; }
-    .next-action span { color:#475569; font-size:14px; }
-    
-    .charts-section { margin: 40px 0; }
-    .charts-section h2 { color: #2d3748; font-size: 24px; margin-bottom: 30px; border-bottom: 2px solid #4299e1; padding-bottom: 10px; }
-    .chart-container { margin: 30px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-    .chart-canvas { width: 100%; height: 400px; }
-    .chart-controls { margin: 20px 0; padding: 15px; background: #f7fafc; border-radius: 6px; }
-    .control-group { display: inline-block; margin: 0 15px 10px 0; }
-    .control-group label { font-weight: bold; margin-right: 10px; color: #4a5568; }
-    .chart-toggle { margin: 10px 5px; padding: 8px 12px; background: #4299e1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    .chart-toggle.inactive { background: #e2e8f0; color: #718096; }
-    .chart-toggle:hover { opacity: 0.8; }
-    @media (max-width:700px) { body { margin:16px auto; padding:14px; } .top-nav { align-items:flex-start; flex-direction:column; } .nav-links { justify-content:flex-start; } .input-section { grid-template-columns:1fr; gap:8px; } .next-action { align-items:flex-start; flex-direction:column; } }
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 960px; margin: 0 auto; padding: 24px 16px 56px; color:#1f2937; background:#f8fafc; }
+    h1 { margin:0; font-size:30px; }
+    h2 { margin:0 0 12px; font-size:20px; }
+    .top { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:20px; }
+    .links { display:flex; gap:10px; flex-wrap:wrap; }
+    .link { text-decoration:none; color:#1d4ed8; font-weight:700; }
+    .primary-link { background:#2563eb; color:white; padding:9px 12px; border-radius:8px; }
+    .notice { background:#eff6ff; border:1px solid #bfdbfe; padding:14px 16px; border-radius:10px; line-height:1.6; }
+    .warning { background:#fff7ed; border:1px solid #fed7aa; padding:12px 14px; border-radius:10px; margin:14px 0; }
+    .mode-tabs { display:flex; gap:10px; margin:22px 0 14px; }
+    .mode-tabs button { flex:1; padding:12px; border:1px solid #cbd5e1; border-radius:9px; background:white; cursor:pointer; font-weight:800; }
+    .mode-tabs button.active { background:#0f172a; color:white; border-color:#0f172a; }
+    .panel { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; }
+    .field { min-width:0; }
+    label { display:block; font-weight:800; margin-bottom:5px; }
+    .help { font-size:12px; color:#64748b; line-height:1.45; margin-top:4px; }
+    input, select { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:7px; font-size:16px; background:white; }
+    input[type="checkbox"] { width:auto; }
+    .checkline { display:flex; gap:8px; align-items:flex-start; font-weight:700; }
+    .calc { width:100%; background:#2563eb; color:white; border:0; border-radius:9px; padding:13px; font-size:17px; font-weight:800; cursor:pointer; }
+    .result { display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:18px; margin-top:18px; }
+    .limit { font-size:30px; font-weight:900; margin:6px 0; }
+    .safe { font-size:18px; font-weight:800; color:#166534; }
+    .rows { display:grid; grid-template-columns:1fr auto; gap:8px 16px; margin-top:16px; font-variant-numeric:tabular-nums; }
+    .rows div:nth-child(even) { text-align:right; font-weight:700; }
+    .error { display:none; color:#991b1b; background:#fef2f2; border:1px solid #fecaca; padding:12px; border-radius:9px; margin-top:12px; white-space:pre-wrap; }
+    .sources { font-size:13px; color:#475569; line-height:1.65; }
+    .sources a { color:#1d4ed8; }
+    @media(max-width:720px){ .top{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr}.mode-tabs{flex-direction:column} }
   </style>
 </head>
 <body>
-  <div class="top-nav">
-    <h1>ふるさと納税限度額計算機</h1>
-    <div class="nav-links">
-      <a class="unit-link" href="rewards.html">2026 単価で返礼品を比較 →</a>
-      <a class="docs-link" href="mkdocs/">解説・ドキュメント</a>
+  <div class="top">
+    <div>
+      <h1>ふるさと納税 上限計算</h1>
+      <div class="help">「年収推計」より、住民税通知書の実額を優先します。</div>
+    </div>
+    <div class="links">
+      <a class="link primary-link" href="rewards.html">2026 単価比較 →</a>
+      <a class="link" href="mkdocs/">ドキュメント</a>
     </div>
   </div>
-  <hr class="header-divider" />
-  
-  <div class="pattern-section">
-    <h3>クイック設定</h3>
-    <div style="margin-bottom:10px">
-      <label for="taxYear" style="font-weight:bold;color:#4a5568">適用年分</label>
-      <select id="taxYear" style="margin-left:10px;">
-        <option value="2025" selected>令和7年分（2025）</option>
-        <option value="2026">令和8年分（2026）</option>
-        <option value="2027">令和9年分以後（2027〜）</option>
-        <option value="2024">令和6年分以前（従前）</option>
-      </select>
-    </div>
-    <select id="patternSelect">
-      <option value="">パターンを選択してください</option>
-      <option value="a">パターンA: 年収300万円（単身）</option>
-      <option value="b">パターンB: 年収400万円（副業・配偶者あり）</option>
-      <option value="c">パターンC: 年収550万円（投資・iDeCo活用）</option>
-      <option value="d">パターンD: 年収800万円（副業・節税対策）</option>
-      <option value="e">パターンE: 年収600万円（dcマッチングのみ）</option>
-      <option value="f">パターンF: 年収700万円（dcマッチング＋小規模共済）</option>
-    </select>
+
+  <div class="notice">
+    <strong>正準モード：</strong>住民税通知書の「税額控除前所得割額」「調整控除」「課税総所得金額」を使います。
+    ふるさと納税の特例控除20%上限は、寄附金控除後の最終所得割額ではなく、<strong>調整控除後の所得割額</strong>が基礎です。
   </div>
 
-  <div class="legend">
-    <h4>入力項目の分類</h4>
-    <div class="legend-item"><span class="legend-color required-color"></span>必須入力</div>
-    <div class="legend-item"><span class="legend-color auto-color"></span>自動計算</div>
-    <div class="legend-item"><span class="legend-color optional-color"></span>任意入力</div>
+  <div class="mode-tabs">
+    <button id="noticeTab" class="active" type="button">住民税通知書から計算（推奨）</button>
+    <button id="estimateTab" type="button">収入から概算</button>
   </div>
 
-  <div class="input-section">
-    <div class="input-group">
-      <h3>収入情報</h3>
-      
-      <div class="field-group required">
-        <label for="salaryIncome">
-          給与収入 <span class="unit">（円）</span>
-          <div class="legal-basis">源泉徴収票「支払金額」</div>
-        </label>
-        <input type="number" id="salaryIncome" placeholder="4000000" min="0" step="10000" onchange="updateDependentFields()">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="sideIncome">
-          副業収入 <span class="unit">（円）</span>
-          <div class="legal-basis">雑所得・事業所得</div>
-        </label>
-        <input type="number" id="sideIncome" placeholder="0" min="0" step="10000">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="capitalGains">
-          投資差益 <span class="unit">（円）</span>
-          <div class="legal-basis">総合課税の場合のみ</div>
-        </label>
-        <input type="number" id="capitalGains" placeholder="0" min="0" step="10000">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="businessRevenue">
-          事業収入 <span class="unit">（円）</span>
-          <div class="legal-basis">所得税法第27条（事業所得）</div>
-        </label>
-        <input type="number" id="businessRevenue" placeholder="0" min="0" step="10000">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="businessExpenses">
-          事業経費 <span class="unit">（円）</span>
-          <div class="legal-basis">所得税法第37条（必要経費）</div>
-        </label>
-        <input type="number" id="businessExpenses" placeholder="0" min="0" step="10000">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="expenseRate">
-          副業経費率 <span class="unit">（0-1）</span>
-          <div class="legal-basis">所得税法第37条</div>
-        </label>
-        <input type="number" id="expenseRate" placeholder="0" min="0" max="1" step="0.1">
-      </div>
-    </div>
-
-    <div class="input-group">
-      <h3>控除情報</h3>
-      
-      <div class="field-group auto">
-        <label for="socialInsurance">
-          社会保険料 <span class="unit">（円）</span>
-          <div class="legal-basis">給与収入×15%（概算）- 厚生年金保険法</div>
-        </label>
-        <input type="number" id="socialInsurance" readonly>
-      </div>
-      
-      <div class="field-group auto">
-        <label for="basicDeduction">
-          基礎控除 <span class="unit">（円）</span>
-          <div class="legal-basis">所得税法第86条（現行制度・自動判定）</div>
-        </label>
-        <input type="number" id="basicDeduction" value="480000" readonly>
-      </div>
-      
-      <div class="field-group required">
-        <label for="spouseIncome">
-          配偶者年収 <span class="unit">（円、なしの場合は0）</span>
-          <div class="legal-basis">所得税法第83条 配偶者控除判定</div>
-        </label>
-        <input type="number" id="spouseIncome" placeholder="0" min="0" step="10000" onchange="updateDependentFields()">
-      </div>
-      
-      <div class="field-group auto">
-        <label for="spouseDeduction">
-          配偶者控除 <span class="unit">（円）</span>
-          <div class="legal-basis">配偶者年収103万以下で38万円</div>
-        </label>
-        <input type="number" id="spouseDeduction" readonly>
-      </div>
-      
-      <div class="field-group optional">
-        <label>
-          企業型DC（事業主拠出・マッチング）
-          <div class="legal-basis">確定拠出年金法第55条ほか（法定月額上限: 55,000円／DB併用時27,500円）</div>
-        </label>
-        <div class="input-subgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end">
-          <div>
-            <label for="employerDcMonthly">事業主拠出（月額） <span class="unit">（円）</span></label>
-            <input type="number" id="employerDcMonthly" placeholder="0" min="0" step="1000">
-          </div>
-          <div>
-            <label for="dcMonths">拠出対象月数 <span class="unit">（1〜12）</span></label>
-            <input type="number" id="dcMonths" placeholder="12" min="1" max="12" step="1" value="12">
-          </div>
-          <div>
-            <label for="hasDb">DB併用</label>
-            <div>
-              <input type="checkbox" id="hasDb"> 併用あり（上限27,500円/月）
-            </div>
-          </div>
-          <div>
-            <label for="dcMatching">従業員マッチング拠出（上限） <span class="unit">（円/年、自動）</span></label>
-            <input type="number" id="dcMatching" readonly>
-          </div>
-        </div>
-        <div class="legal-basis" style="margin-top:6px">
-          注: 従業員マッチング拠出は「事業主拠出≧従業員拠出」かつ「事業主＋従業員≦法定上限（月額）」の範囲。
-        </div>
-      </div>
-      
-      <div class="field-group optional">
-        <label for="ideco">
-          iDeCo拠出 <span class="unit">（円）</span>
-          <div class="legal-basis">確定拠出年金法 - 会社員年27.6万限度</div>
-        </label>
-        <input type="number" id="ideco" placeholder="0" min="0" max="276000" step="1000">
-      </div>
-      
-      <div class="field-group optional">
-        <label for="smallBusiness">
-          小規模企業共済 <span class="unit">（円）</span>
-          <div class="legal-basis">小規模企業共済法 - 年84万限度</div>
-        </label>
-        <input type="number" id="smallBusiness" placeholder="0" min="0" max="840000" step="10000">
-      </div>
-
-      <div class="field-group optional">
-        <label for="bookkeepingMethod">
-          青色申告（記帳方法）
-          <div class="legal-basis">所得税法第57条の2（複式:55万/簡易:10万、e-Tax等で65万）</div>
-        </label>
-        <select id="bookkeepingMethod">
-          <option value="none" selected>適用なし</option>
-          <option value="simple">簡易簿記（10万円控除）</option>
-          <option value="double">複式簿記（55万円控除）</option>
+  <div id="noticePanel" class="panel">
+    <h2>住民税通知書モード</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="taxYear">所得の年分</label>
+        <select id="taxYear">
+          <option value="2024">2024年分 → 令和7年度住民税</option>
+          <option value="2025" selected>2025年分 → 令和8年度住民税</option>
+          <option value="2026">2026年分 → 令和9年度住民税</option>
         </select>
-        <div style="margin-top:8px">
-          <label style="font-weight:normal;color:#4a5568">
-            <input type="checkbox" id="useETax"> e-Tax提出（または電子帳簿保存）
-            <span class="legal-basis">※ 複式簿記と併用で65万円控除</span>
-          </label>
-        </div>
+      </div>
+      <div class="field">
+        <label for="incomeTaxBasicDeduction">所得税の基礎控除額（円）</label>
+        <input id="incomeTaxBasicDeduction" type="number" min="0" step="1" placeholder="580000">
+        <div class="help">所得税の確定申告書・源泉徴収関係資料の実額。令和8年度以降の特例控除率判定に必要です。</div>
+      </div>
+      <div class="field">
+        <label for="totalIncome">総所得金額等（円・任意）</label>
+        <input id="totalIncome" type="number" min="0" step="1" placeholder="8000000">
+        <div class="help">分離課税所得等も含む「総所得金額等」が正確に分かる場合のみ入力。寄附金基本控除の30%上限確認にだけ使用します。</div>
+      </div>
+      <div class="field">
+        <label for="taxableResidentGeneralIncome">課税総所得金額（円）</label>
+        <input id="taxableResidentGeneralIncome" type="number" min="0" step="1000" placeholder="6500000">
+        <div class="help">通知書の「課税総所得」等。通常ケースの特例控除率判定に使用。</div>
+      </div>
+      <div class="field">
+        <label for="incomeLevyBeforeTaxCredits">税額控除前所得割額（円）</label>
+        <input id="incomeLevyBeforeTaxCredits" type="number" min="0" step="1" placeholder="400000">
+        <div class="help">寄附金・住宅ローン等の税額控除を差し引く前の所得割額。</div>
+      </div>
+      <div class="field">
+        <label for="adjustmentDeduction">調整控除額（円）</label>
+        <input id="adjustmentDeduction" type="number" min="0" step="1" placeholder="2500">
+        <div class="help">市民税＋府県民税の合計。通知書の実額を入力。</div>
+      </div>
+      <div class="field">
+        <label for="humanDeductionDifference">所得税との人的控除額の差（円）</label>
+        <input id="humanDeductionDifference" type="number" min="0" step="1" value="50000">
+        <div class="help">基礎控除のみなら通常5万円。配偶者・扶養等がある場合は公式表に従って差額を合算。</div>
+      </div>
+      <div class="field">
+        <label for="currentDonation">今年の寄附済額（円・任意）</label>
+        <input id="currentDonation" type="number" min="0" step="1" placeholder="100000">
+      </div>
+      <div class="field">
+        <label class="checkline"><input id="hasSpecialTaxationNotice" type="checkbox"> 山林・退職・土地建物・株式等の分離課税や課税特例がある</label>
+        <div class="help">大阪市公式は、この場合に通常の特例控除率表と異なる割合が適用されると明記しています。</div>
+      </div>
+      <div class="field">
+        <label for="specialRateOverride">特例控除率の上書き（%・任意）</label>
+        <input id="specialRateOverride" type="number" min="0" max="100" step="0.001" placeholder="例: 69.58">
+        <div class="help">上の分離課税等に該当する場合は、自治体等で確認した割合を入力しない限り計算を停止します。</div>
       </div>
     </div>
+    <div class="warning">通知書の実額で20%上限の母数は確定できます。一方、山林・退職・課税特例がある場合の「特例控除率」は通常表から自動決定しません。誤った率で上限を出すより、fail-closeします。</div>
+    <button id="noticeCalc" class="calc" type="button">通知書実額で計算</button>
   </div>
 
-  <button id="calcButton">計算する</button>
+  <div id="estimatePanel" class="panel" style="display:none">
+    <h2>収入から概算</h2>
+    <div class="warning"><strong>概算専用。</strong>株式等の申告分離課税、住宅ローン、複雑な人的控除がある場合は使用せず、通知書モードへ切り替えてください。</div>
+    <div class="grid">
+      <div class="field">
+        <label for="estimateTaxYear">所得の年分</label>
+        <select id="estimateTaxYear">
+          <option value="2024">2024</option>
+          <option value="2025" selected>2025</option>
+          <option value="2026">2026</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="salaryIncome">給与収入（円）</label>
+        <input id="salaryIncome" type="number" min="0" step="1" placeholder="7000000">
+      </div>
+      <div class="field">
+        <label for="otherAggregateIncome">その他の総合課税所得（円）</label>
+        <input id="otherAggregateIncome" type="number" min="0" step="1" value="0">
+        <div class="help">事業・雑所得等は必要経費・青色申告特別控除等を反映した後の所得額を入力。</div>
+      </div>
+      <div class="field">
+        <label for="residentOtherDeductions">住民税の所得控除（基礎控除を除く）（円）</label>
+        <input id="residentOtherDeductions" type="number" min="0" step="1" value="0">
+        <div class="help">社会保険料、小規模企業共済、生命保険、配偶者・扶養等の住民税上の控除額合計。</div>
+      </div>
+      <div class="field">
+        <label for="estimateHumanDifference">所得税との人的控除額の差（円）</label>
+        <input id="estimateHumanDifference" type="number" min="0" step="1" value="50000">
+      </div>
+      <div class="field">
+        <label for="estimateDonation">寄附済額（円・任意）</label>
+        <input id="estimateDonation" type="number" min="0" step="1">
+      </div>
+      <div class="field">
+        <label class="checkline"><input id="hasSeparateTaxation" type="checkbox"> 株式等の申告分離課税・分離課税所得がある</label>
+        <div class="help">チェック時は誤計算を防ぐため停止し、通知書モードへ誘導します。</div>
+      </div>
+    </div>
+    <button id="estimateCalc" class="calc" type="button">概算する</button>
+  </div>
 
-  <div id="result" class="result" style="display: none;">
+  <div id="error" class="error"></div>
+  <div id="result" class="result">
     <h2>計算結果</h2>
-    <div class="highlight" id="limit"></div>
-    <div class="calculation" id="breakdown"></div>
+    <div>理論上限</div>
+    <div id="limit" class="limit"></div>
+    <div id="safeLimit" class="safe"></div>
+    <div id="resultRows" class="rows"></div>
   </div>
 
-  <div class="next-action">
-    <div><strong>上限を確認したら、次は単価比較</strong><span>飲料は円/L、食品は円/100g・円/食にそろえて比較します。</span></div>
-    <a class="unit-link" href="rewards.html">2026 単価比較へ →</a>
+  <div class="panel sources">
+    <strong>計算根拠</strong><br>
+    ・大阪市「税額控除額の種類と計算」：特例控除は調整控除後所得割額の20%が上限。令和8年度以降は、特例控除率判定で所得税基礎控除の48万円超過分も差し引く。<br>
+    ・国税庁「給与所得控除」「令和7年度税制改正による所得税の基礎控除の見直し等」。<br>
+    <a href="https://www.city.osaka.lg.jp/zaisei/page/0000370599.html">大阪市公式</a> / <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1410.htm">国税庁 給与所得控除</a>
   </div>
 
-  <div id="chartsSection" class="charts-section" style="display: none;">
-    <h2>給与収入別税額シミュレーション</h2>
-    
-    <div class="chart-controls">
-      <div class="control-group">
-        <label>表示切替:</label>
-        <button class="chart-toggle" id="toggleTaxChart">税額比較</button>
-        <button class="chart-toggle" id="toggleSavingsChart">節税効果</button>
-        <button class="chart-toggle" id="toggleFurusatoChart">ふるさと納税</button>
-      </div>
-      <div class="control-group">
-        <button class="chart-toggle" id="updateCharts">グラフを更新</button>
-      </div>
-    </div>
-    
-    <div class="chart-container" id="taxChartContainer">
-      <canvas id="taxComparisonChart" class="chart-canvas"></canvas>
-    </div>
-    
-    <div class="chart-container" id="savingsChartContainer" style="display: none;">
-      <canvas id="savingsEffectChart" class="chart-canvas"></canvas>
-    </div>
-    
-    <div class="chart-container" id="furusatoChartContainer" style="display: none;">
-      <canvas id="furusatoChart" class="chart-canvas"></canvas>
-    </div>
-  </div>
-
+  <script src="tax-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
