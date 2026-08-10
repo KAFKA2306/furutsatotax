@@ -21,11 +21,19 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install MkDocs
+          python-version: '3.12'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
         run: |
-          pip install mkdocs
-          pip install mkdocs-material
+          python -m pip install PyYAML mkdocs mkdocs-material
+      - name: Verify calculation cores before public deploy
+        run: |
+          python -m compileall scripts tests
+          python -m unittest discover -s tests -v
+          node tests/test_web_tax_core.js
       - name: Build MkDocs site
         run: mkdocs build
       - name: Copy web files to deploy directory
