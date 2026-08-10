@@ -10,6 +10,13 @@
     const v = value(id).trim();
     return v === '' ? null : Number(v);
   };
+  const requiredNumber = (id, label) => {
+    const v = value(id).trim();
+    if (v === '') throw new Error(`${label}を入力してください`);
+    const n = Number(v);
+    if (!Number.isFinite(n)) throw new Error(`${label}を数値で入力してください`);
+    return n;
+  };
   const money = (amount) => `${Math.round(Number(amount)).toLocaleString('ja-JP')}円`;
 
   function showError(error) {
@@ -60,17 +67,21 @@
   function calculateNotice() {
     try {
       const taxYear = Number(value('taxYear'));
-      const totalIncome = optional('totalIncome');
-      if (totalIncome === null) throw new Error('総所得金額等を入力してください');
-      const incomeTaxBasicDeduction = core.incomeTaxBasicDeduction(totalIncome, taxYear);
+      const incomeTaxBasicDeduction = requiredNumber('incomeTaxBasicDeduction', '所得税の基礎控除額');
       const overridePercent = optional('specialRateOverride');
+      if ($('hasSpecialTaxationNotice').checked && overridePercent === null) {
+        throw new Error(
+          '分離課税・課税特例があるため、通常の特例控除率表では確定できません。' +
+          '自治体等で確認した特例控除率を入力してください。'
+        );
+      }
       const result = core.limitFromNotice({
         taxYear,
-        totalIncome,
-        taxableResidentGeneralIncome: Number(value('taxableResidentGeneralIncome')),
-        incomeLevyBeforeTaxCredits: Number(value('incomeLevyBeforeTaxCredits')),
-        adjustmentDeduction: Number(value('adjustmentDeduction')),
-        humanDeductionDifference: Number(value('humanDeductionDifference')),
+        totalIncome: optional('totalIncome'),
+        taxableResidentGeneralIncome: requiredNumber('taxableResidentGeneralIncome', '課税総所得金額'),
+        incomeLevyBeforeTaxCredits: requiredNumber('incomeLevyBeforeTaxCredits', '税額控除前所得割額'),
+        adjustmentDeduction: requiredNumber('adjustmentDeduction', '調整控除額'),
+        humanDeductionDifference: requiredNumber('humanDeductionDifference', '所得税との人的控除額の差'),
         incomeTaxBasicDeduction,
         currentDonation: optional('currentDonation'),
         specialCreditRateOverride: overridePercent === null ? null : overridePercent / 100,
@@ -85,10 +96,10 @@
     try {
       const result = core.estimateFromIncome({
         taxYear: Number(value('estimateTaxYear')),
-        salaryIncome: Number(value('salaryIncome')),
-        otherAggregateIncome: Number(value('otherAggregateIncome')),
-        residentOtherDeductions: Number(value('residentOtherDeductions')),
-        humanDeductionDifference: Number(value('estimateHumanDifference')),
+        salaryIncome: requiredNumber('salaryIncome', '給与収入'),
+        otherAggregateIncome: requiredNumber('otherAggregateIncome', 'その他の総合課税所得'),
+        residentOtherDeductions: requiredNumber('residentOtherDeductions', '住民税の所得控除'),
+        humanDeductionDifference: requiredNumber('estimateHumanDifference', '所得税との人的控除額の差'),
         hasSeparateTaxation: $('hasSeparateTaxation').checked,
         currentDonation: optional('estimateDonation'),
       });
