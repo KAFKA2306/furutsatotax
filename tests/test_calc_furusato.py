@@ -21,8 +21,8 @@ class SalaryIncomeTests(unittest.TestCase):
         self.assertEqual(calc.salary_income_after_deduction(1_600_000, 2024), 1_050_000)
 
     def test_2025_table_rounding_below_6_6m(self) -> None:
-        self.assertEqual(calc.salary_income_after_deduction(3_599_999, 2025), 2_439_200)
-        self.assertEqual(calc.salary_income_after_deduction(6_599_999, 2025), 4_759_200)
+        self.assertEqual(calc.salary_income_after_deduction(3_599_999, 2025), 2_437_200)
+        self.assertEqual(calc.salary_income_after_deduction(6_599_999, 2025), 4_836_800)
 
     def test_2026_special_low_income_bands(self) -> None:
         self.assertEqual(calc.salary_income_after_deduction(740_999, 2026), 0)
