@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "source": {
+    "title": "国税庁 令和6年分 民間給与実態統計調査 第3表 給与階級別の総括表",
+    "survey_year": 2024,
+    "scope": "1年を通じて勤務した給与所得者・男女計",
+    "population": 51365699,
+    "landing_url": "https://www.nta.go.jp/publication/statistics/kokuzeicho/minkan2024/minkan.htm",
+    "table_url": "https://www.nta.go.jp/publication/statistics/kokuzeicho/minkan2024/pdf/R06_03.pdf"
+  },
+  "privacy_note": "給与階級の人数と構成比だけが公的統計の実測値です。example_salary_yen と variant の税務入力値は、特定個人に由来しない合成例です。",
+  "income_buckets": [
+    {"id":"B01","label":"100万円以下","lower_exclusive_yen":null,"upper_inclusive_yen":1000000,"population":3933800,"share_pct":7.6584,"example_salary_yen":500000,"synthetic":true},
+    {"id":"B02","label":"100万円超200万円以下","lower_exclusive_yen":1000000,"upper_inclusive_yen":2000000,"population":5706758,"share_pct":11.1101,"example_salary_yen":1500000,"synthetic":true},
+    {"id":"B03","label":"200万円超300万円以下","lower_exclusive_yen":2000000,"upper_inclusive_yen":3000000,"population":6767419,"share_pct":13.1750,"example_salary_yen":2500000,"synthetic":true},
+    {"id":"B04","label":"300万円超400万円以下","lower_exclusive_yen":3000000,"upper_inclusive_yen":4000000,"population":8257811,"share_pct":16.0765,"example_salary_yen":3500000,"synthetic":true},
+    {"id":"B05","label":"400万円超500万円以下","lower_exclusive_yen":4000000,"upper_inclusive_yen":5000000,"population":7870374,"share_pct":15.3222,"example_salary_yen":4500000,"synthetic":true},
+    {"id":"B06","label":"500万円超600万円以下","lower_exclusive_yen":5000000,"upper_inclusive_yen":6000000,"population":6059323,"share_pct":11.7964,"example_salary_yen":5500000,"synthetic":true},
+    {"id":"B07","label":"600万円超700万円以下","lower_exclusive_yen":6000000,"upper_inclusive_yen":7000000,"population":3907007,"share_pct":7.6063,"example_salary_yen":6500000,"synthetic":true},
+    {"id":"B08","label":"700万円超800万円以下","lower_exclusive_yen":7000000,"upper_inclusive_yen":8000000,"population":2710305,"share_pct":5.2765,"example_salary_yen":7500000,"synthetic":true},
+    {"id":"B09","label":"800万円超900万円以下","lower_exclusive_yen":8000000,"upper_inclusive_yen":9000000,"population":1741442,"share_pct":3.3903,"example_salary_yen":8500000,"synthetic":true},
+    {"id":"B10","label":"900万円超1,000万円以下","lower_exclusive_yen":9000000,"upper_inclusive_yen":10000000,"population":1208265,"share_pct":2.3523,"example_salary_yen":9500000,"synthetic":true},
+    {"id":"B11","label":"1,000万円超1,500万円以下","lower_exclusive_yen":10000000,"upper_inclusive_yen":15000000,"population":2305820,"share_pct":4.4890,"example_salary_yen":12500000,"synthetic":true},
+    {"id":"B12","label":"1,500万円超2,000万円以下","lower_exclusive_yen":15000000,"upper_inclusive_yen":20000000,"population":576392,"share_pct":1.1221,"example_salary_yen":17500000,"synthetic":true},
+    {"id":"B13","label":"2,000万円超2,500万円以下","lower_exclusive_yen":20000000,"upper_inclusive_yen":25000000,"population":146596,"share_pct":0.2854,"example_salary_yen":22500000,"synthetic":true},
+    {"id":"B14","label":"2,500万円超","lower_exclusive_yen":25000000,"upper_inclusive_yen":null,"population":174387,"share_pct":0.3395,"example_salary_yen":30000000,"synthetic":true}
+  ],
+  "variants": [
+    {"id":"base","label":"給与のみ・追加控除なし","other_aggregate_income_yen":0,"resident_other_deductions_yen":0,"human_deduction_difference_yen":50000,"has_separate_taxation":false,"synthetic":true},
+    {"id":"deduction_300k","label":"所得控除を30万円追加","other_aggregate_income_yen":0,"resident_other_deductions_yen":300000,"human_deduction_difference_yen":50000,"has_separate_taxation":false,"synthetic":true},
+    {"id":"deduction_800k","label":"所得控除を80万円追加","other_aggregate_income_yen":0,"resident_other_deductions_yen":800000,"human_deduction_difference_yen":50000,"has_separate_taxation":false,"synthetic":true},
+    {"id":"side_300k","label":"総合課税のその他所得30万円","other_aggregate_income_yen":300000,"resident_other_deductions_yen":0,"human_deduction_difference_yen":50000,"has_separate_taxation":false,"synthetic":true},
+    {"id":"side_1m_deduction_500k","label":"その他所得100万円＋所得控除50万円","other_aggregate_income_yen":1000000,"resident_other_deductions_yen":500000,"human_deduction_difference_yen":50000,"has_separate_taxation":false,"synthetic":true},
+    {"id":"separate_taxation_guard","label":"分離課税あり（安全停止の確認用）","other_aggregate_income_yen":0,"resident_other_deductions_yen":0,"human_deduction_difference_yen":50000,"has_separate_taxation":true,"synthetic":true}
+  ]
+}
