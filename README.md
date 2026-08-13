@@ -107,17 +107,39 @@
 - 分離課税所得
 - 事業赤字・損失通算・繰越控除を簡易入力だけで再現しようとする場合
 
+### 統計分布から合成例を入れる
+
+収入概算モードでは、個人由来の「年収○○万円の人」という少数の例ではなく、国税庁「令和6年分 民間給与実態統計調査」第3表の給与階級をそのまま使った例示カタログを表示します。
+
+- 対象: 1年を通じて勤務した給与所得者・男女計 51,365,699人
+- 給与階級: 100万円以下〜2,500万円超の14区分を全て保持
+- `population` と `share_pct`: 国税庁公表値
+- `example_salary_yen`: 各階級を試すための合成代表値。特定個人の給与ではない
+- 税務条件: 「追加控除なし」「控除30万円」「控除80万円」「その他所得30万円」等の合成条件。人口頻度を表さない
+- 分離課税ありの例は、簡易モードが安全停止することを確認するテストケース
+
+正準データは `web/data/synthetic-income-profiles.json` です。旧来の個人的に見えやすい6個のYAML例はmainから削除しました。
+
+統計の一次資料:
+
+- 国税庁「令和6年分 民間給与実態統計調査」  
+  https://www.nta.go.jp/publication/statistics/kokuzeicho/minkan2024/minkan.htm
+- 国税庁「第3表 給与階級別の総括表」  
+  https://www.nta.go.jp/publication/statistics/kokuzeicho/minkan2024/pdf/R06_03.pdf
+
+**プライバシー境界:** 給与階級の人数・構成比以外の例示入力は合成値であり、リポジトリ所有者を含む特定個人の所得・税務情報を表しません。
+
 ## Python CLI
 
-住民税通知書モードの入力例:
+住民税通知書モードでは、次のキーへ自分の通知書・申告資料の実額を入力します。READMEには個人データと誤読される具体的な所得例を固定しません。
 
 ```yaml
 tax_year: 2025
-total_income: 8000000
-resident_taxable_general_income: 6600000
-resident_income_levy_before_tax_credits: 400000
-resident_adjustment_deduction: 2500
-human_deduction_difference: 50000
+total_income: <総所得金額等の実額>
+resident_taxable_general_income: <課税総所得金額の実額>
+resident_income_levy_before_tax_credits: <税額控除前所得割額の実額>
+resident_adjustment_deduction: <調整控除額の実額>
+human_deduction_difference: <人的控除額の差の実額>
 ```
 
 実行:
@@ -148,6 +170,9 @@ node tests/test_web_tax_core.js
 - 総所得金額等30%の寄附金基本控除上限
 - 申告分離課税・事業赤字のfail-close
 - 未対応年度のfail-close
+- 合成プロファイル14給与階級の人数合計 51,365,699人
+- 合成プロファイルの構成比合計100%
+- 全例の `synthetic: true` と国税庁source URL
 
 ## 限界
 
