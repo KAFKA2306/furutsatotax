@@ -54,7 +54,7 @@ jobs:
       - name: Verify checkout clean
         run: |
           find scripts tests -type d -name __pycache__ -prune -exec rm -rf {} +
-          rm -rf site deploy
+          rm -rf deploy web/mkdocs
           test -z "$(git status --porcelain --untracked-files=all)"
       - uses: actions/deploy-pages@v4
         if: github.event_name == 'push'
