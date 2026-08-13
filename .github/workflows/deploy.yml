@@ -3,6 +3,7 @@ name: Deploy MkDocs to Pages
 on:
   push:
     branches: ["main"]
+  pull_request:
 
 permissions:
   contents: read
@@ -10,22 +11,22 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         run: |
           python -m pip install PyYAML mkdocs mkdocs-material
@@ -43,9 +44,17 @@ jobs:
           # MkDocsサイトは /mkdocs/ サブディレクトリに配置
           cp -r web/mkdocs/* deploy/mkdocs/ 2>/dev/null || true
       - uses: actions/configure-pages@v5
+        if: github.event_name == 'push'
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v4
+        if: github.event_name == 'push'
         with:
           path: deploy
+      - name: Verify checkout clean
+        run: |
+          find scripts tests -type d -name __pycache__ -prune -exec rm -rf {} +
+          rm -rf deploy web/mkdocs
+          test -z "$(git status --porcelain --untracked-files=all)"
       - uses: actions/deploy-pages@v4
+        if: github.event_name == 'push'
