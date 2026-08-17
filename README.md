@@ -1,5 +1,8 @@
 # ふるさと納税 上限計算ツール
 
+[![Tax data API](https://github.com/KAFKA2306/furutsatotax/actions/workflows/tax-data-api.yml/badge.svg)](https://github.com/KAFKA2306/furutsatotax/actions/workflows/tax-data-api.yml)
+[![Deploy MkDocs to Pages](https://github.com/KAFKA2306/furutsatotax/actions/workflows/deploy.yml/badge.svg)](https://github.com/KAFKA2306/furutsatotax/actions/workflows/deploy.yml)
+
 **公開サイト:** https://kafka2306.github.io/furutsatotax/
 
 このリポジトリは、ふるさと納税の「自己負担2,000円で収まる寄附上限」を計算します。
