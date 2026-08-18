@@ -60,8 +60,45 @@
     $('estimatePanel').style.display = notice ? 'none' : 'block';
     $('noticeTab').classList.toggle('active', notice);
     $('estimateTab').classList.toggle('active', !notice);
+    $('noticeTab').setAttribute('aria-selected', String(notice));
+    $('estimateTab').setAttribute('aria-selected', String(!notice));
+    $('noticeTab').tabIndex = notice ? 0 : -1;
+    $('estimateTab').tabIndex = notice ? -1 : 0;
     clearError();
     $('result').style.display = 'none';
+  }
+
+  function setupModeTabs() {
+    const tabList = document.querySelector('.mode-tabs');
+    const tabs = [$('noticeTab'), $('estimateTab')];
+    const panels = [$('noticePanel'), $('estimatePanel')];
+    const modes = ['notice', 'estimate'];
+
+    tabList.setAttribute('role', 'tablist');
+    tabList.setAttribute('aria-label', '計算方法');
+
+    tabs.forEach((tab, index) => {
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', panels[index].id);
+      panels[index].setAttribute('role', 'tabpanel');
+      panels[index].setAttribute('aria-labelledby', tab.id);
+      panels[index].tabIndex = 0;
+
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex = null;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = tabs.length - 1;
+        if (nextIndex === null) return;
+
+        event.preventDefault();
+        switchMode(modes[nextIndex]);
+        tabs[nextIndex].focus();
+      });
+    });
+
+    switchMode('notice');
   }
 
   function calculateNotice() {
@@ -217,6 +254,7 @@
     }
   }
 
+  setupModeTabs();
   $('noticeTab').addEventListener('click', () => switchMode('notice'));
   $('estimateTab').addEventListener('click', () => switchMode('estimate'));
   $('noticeCalc').addEventListener('click', calculateNotice);
