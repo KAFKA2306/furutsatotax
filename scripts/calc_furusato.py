@@ -1,6 +1,5 @@
 import argparse
 import math
-import warnings
 from typing import Any
 
 import yaml
@@ -9,8 +8,6 @@ SUPPORTED_TAX_YEARS = {2024, 2025, 2026}
 RECONSTRUCTION_SURTAX_FACTOR = 1.021
 RESIDENT_BASIC_DEDUCTION_REFERENCE = 480_000
 
-# ふるさと納税の住民税特例控除に使う割合（復興特別所得税を反映した割合）。
-# 大阪市「税額控除額の種類と計算」令和8年度課税分以降の表と同じ区分。
 SPECIAL_CREDIT_RATE_TABLE = (
     (1_950_000, 0.84895),
     (3_300_000, 0.79790),
@@ -48,6 +45,12 @@ def _number(value: Any, name: str, *, minimum: float | None = None) -> float:
     return result
 
 
+def _required_number(data: dict[str, Any], name: str, *, minimum: float | None = None) -> float:
+    if name not in data or data[name] is None:
+        raise ValueError(f"{name} is required; do not substitute an estimated/default value")
+    return _number(data[name], name, minimum=minimum)
+
+
 def _as_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -59,13 +62,6 @@ def _rounded_quarter(salary: float) -> int:
 
 
 def salary_income_after_deduction(salary: float, tax_year: int) -> float:
-    """給与収入から給与所得を返す。
-
-    660万円未満は国税庁の給与所得控除後の給与等の金額の表に合わせ、
-    令和7年分は1/4千円未満切捨てを反映する。令和6年分以前の低所得帯も
-    最低控除55万円を固定し、旧実装の ``max(55万円, 収入×40%)`` 誤りを除く。
-    """
-
     year = validate_tax_year(tax_year)
     salary = _number(salary, "salary_income", minimum=0)
 
@@ -101,7 +97,6 @@ def salary_income_after_deduction(salary: float, tax_year: int) -> float:
             return max(0.0, salary * 0.9 - 1_100_000)
         return max(0.0, salary - 1_950_000)
 
-    # 2026年: 国税庁の令和8年分年末調整表。
     if salary < 741_000:
         return 0.0
     if salary < 2_191_000:
@@ -112,7 +107,6 @@ def salary_income_after_deduction(salary: float, tax_year: int) -> float:
         return 1_453_000.0
     if salary < 2_200_000:
         return 1_456_000.0
-
     b = _rounded_quarter(salary)
     if salary < 3_600_000:
         return max(0.0, b * 2.8 - 80_000)
@@ -124,11 +118,8 @@ def salary_income_after_deduction(salary: float, tax_year: int) -> float:
 
 
 def basic_deduction_income_tax(aggregate_income: float, tax_year: int) -> int:
-    """税年度別の所得税基礎控除額を返す。"""
-
     year = validate_tax_year(tax_year)
     income = _number(aggregate_income, "aggregate_income", minimum=0)
-
     if year == 2024:
         if income <= 24_000_000:
             return 480_000
@@ -137,7 +128,6 @@ def basic_deduction_income_tax(aggregate_income: float, tax_year: int) -> int:
         if income <= 25_000_000:
             return 160_000
         return 0
-
     if year == 2025:
         if income <= 1_320_000:
             return 950_000
@@ -149,14 +139,13 @@ def basic_deduction_income_tax(aggregate_income: float, tax_year: int) -> int:
             return 630_000
         if income <= 23_500_000:
             return 580_000
-    else:  # 2026年
+    else:
         if income <= 4_890_000:
             return 1_040_000
         if income <= 6_550_000:
             return 670_000
         if income <= 23_500_000:
             return 620_000
-
     if income <= 24_000_000:
         return 480_000
     if income <= 24_500_000:
@@ -184,7 +173,6 @@ def _configured_blue_deduction(data: dict[str, Any], business_profit: float) -> 
         specified = data["blue_deduction_amount"]
     else:
         specified = None
-
     if specified is None:
         method = str(data.get("bookkeeping_method", "none")).lower()
         if method in {"double", "複式", "複式簿記"}:
@@ -193,60 +181,35 @@ def _configured_blue_deduction(data: dict[str, Any], business_profit: float) -> 
             specified = 100_000
         else:
             specified = 0
-
-    amount = _number(specified, "blue_deduction", minimum=0)
-    return min(business_profit, amount)
+    return min(business_profit, _number(specified, "blue_deduction", minimum=0))
 
 
 def _dc_matching_deduction(data: dict[str, Any]) -> float:
     if data.get("dc_matching") is not None:
         return _number(data["dc_matching"], "dc_matching", minimum=0)
-
     employer_monthly = _number(data.get("employer_dc_monthly", 0), "employer_dc_monthly", minimum=0)
-    if employer_monthly == 0:
-        return 0.0
-
-    warnings.warn(
-        "dc_matching was estimated from generic statutory caps. "
-        "Confirm the actual plan rules and contribution statement.",
-        RuntimeWarning,
-        stacklevel=2,
-    )
-    months = int(_number(data.get("dc_months", 12), "dc_months", minimum=1))
-    months = min(12, months)
-    statutory_cap = 27_500 if _as_bool(data.get("has_db", False)) else 55_000
-    employee_monthly = max(0.0, min(employer_monthly, max(0.0, statutory_cap - employer_monthly)))
-    return employee_monthly * months
+    if employer_monthly > 0:
+        raise ValueError(
+            "dc_matching is required when employer_dc_monthly is provided; "
+            "the employee contribution cannot be inferred from the employer contribution"
+        )
+    return 0.0
 
 
-def calc_taxable_income_bases(
-    data: dict[str, Any], tax_year: int
-) -> tuple[float, float, float, float, float]:
-    """簡易モード用の課税所得を計算する。
-
-    申告分離課税、住宅ローン、配偶者・扶養などを自動推定しない。
-    必要な控除差は income_tax_only_deductions / resident_tax_only_deductions で
-    明示入力する。申告分離課税がある場合は通知書モードを使う。
-    """
-
+def calc_taxable_income_bases(data: dict[str, Any], tax_year: int) -> tuple[float, float, float, float, float]:
     year = validate_tax_year(tax_year)
     if not isinstance(data, dict):
         raise ValueError("Input YAML must contain a mapping/object at the top level")
-
     if _number(data.get("separately_taxed_income", 0), "separately_taxed_income", minimum=0):
         raise ValueError(
             "Separately taxed income changes resident-tax mechanics. "
             "Use notice mode with resident_income_levy_before_tax_credits instead."
         )
-
     salary = salary_income_after_deduction(data.get("salary_income", 0), year)
-
     expense_rate = _number(data.get("expense_rate", 0), "expense_rate", minimum=0)
     if expense_rate > 1:
         raise ValueError("expense_rate must be between 0 and 1")
-    side_income = _number(data.get("side_income", 0), "side_income", minimum=0)
-    side = side_income * (1 - expense_rate)
-
+    side = _number(data.get("side_income", 0), "side_income", minimum=0) * (1 - expense_rate)
     capital = _number(data.get("capital_gains", 0), "capital_gains", minimum=0)
     if capital and not _as_bool(data.get("treat_capital_gains_as_aggregate_income", False)):
         raise ValueError(
@@ -254,17 +217,12 @@ def calc_taxable_income_bases(
             "Set treat_capital_gains_as_aggregate_income=true only when legally correct; "
             "for listed-stock gains use notice mode."
         )
-
     business_revenue = _number(data.get("business_revenue", 0), "business_revenue", minimum=0)
     business_expenses = _number(data.get("business_expenses", 0), "business_expenses", minimum=0)
     if business_expenses > business_revenue:
-        raise ValueError(
-            "Business losses are not modeled in estimate mode. Use actual taxable bases/notice mode."
-        )
+        raise ValueError("Business losses are not modeled in estimate mode. Use actual taxable bases/notice mode.")
     business_profit_before_deduction = business_revenue - business_expenses
-    blue_deduction = _configured_blue_deduction(data, business_profit_before_deduction)
-    business = business_profit_before_deduction - blue_deduction
-
+    business = business_profit_before_deduction - _configured_blue_deduction(data, business_profit_before_deduction)
     total_income = salary + side + business + capital
     common_deductions = (
         _number(data.get("social_insurance", 0), "social_insurance", minimum=0)
@@ -273,43 +231,27 @@ def calc_taxable_income_bases(
         + _number(data.get("small_business", 0), "small_business", minimum=0)
         + _number(data.get("other_common_deductions", 0), "other_common_deductions", minimum=0)
     )
-
     basic_income_tax = data.get("basic_deduction_income")
     basic_resident_tax = data.get("basic_deduction_resident")
-    if basic_income_tax is None:
-        basic_income_tax = basic_deduction_income_tax(total_income, year)
-    else:
-        basic_income_tax = _number(basic_income_tax, "basic_deduction_income", minimum=0)
-    if basic_resident_tax is None:
-        basic_resident_tax = basic_deduction_resident_tax(total_income)
-    else:
-        basic_resident_tax = _number(basic_resident_tax, "basic_deduction_resident", minimum=0)
-
-    income_only = _number(
-        data.get("income_tax_only_deductions", 0),
-        "income_tax_only_deductions",
-        minimum=0,
+    basic_income_tax = (
+        basic_deduction_income_tax(total_income, year)
+        if basic_income_tax is None
+        else _number(basic_income_tax, "basic_deduction_income", minimum=0)
     )
-    resident_only = _number(
-        data.get("resident_tax_only_deductions", 0),
-        "resident_tax_only_deductions",
-        minimum=0,
+    basic_resident_tax = (
+        basic_deduction_resident_tax(total_income)
+        if basic_resident_tax is None
+        else _number(basic_resident_tax, "basic_deduction_resident", minimum=0)
     )
-
+    income_only = _number(data.get("income_tax_only_deductions", 0), "income_tax_only_deductions", minimum=0)
+    resident_only = _number(data.get("resident_tax_only_deductions", 0), "resident_tax_only_deductions", minimum=0)
     taxable_income_tax = max(0.0, total_income - common_deductions - basic_income_tax - income_only)
     taxable_resident_tax = max(0.0, total_income - common_deductions - basic_resident_tax - resident_only)
-    return (
-        taxable_income_tax,
-        taxable_resident_tax,
-        total_income,
-        float(basic_income_tax),
-        float(basic_resident_tax),
-    )
+    return taxable_income_tax, taxable_resident_tax, total_income, float(basic_income_tax), float(basic_resident_tax)
 
 
 def _taxable_thousand_yen(taxable: float) -> int:
-    taxable = _number(taxable, "taxable_income", minimum=0)
-    return math.floor(taxable / 1_000) * 1_000
+    return math.floor(_number(taxable, "taxable_income", minimum=0) / 1_000) * 1_000
 
 
 def income_tax(taxable: float) -> float:
@@ -352,20 +294,14 @@ def resident_tax(taxable: float) -> float:
     return _number(taxable, "taxable_resident_income", minimum=0) * 0.10
 
 
-def resident_adjustment_deduction(
-    taxable_resident_income: float,
-    human_deduction_difference: float,
-) -> float:
-    """市民税・府民税の調整控除合計を概算する（合計5%）。"""
-
+def resident_adjustment_deduction(taxable_resident_income: float, human_deduction_difference: float) -> float:
     taxable = _number(taxable_resident_income, "taxable_resident_income", minimum=0)
     diff = _number(human_deduction_difference, "human_deduction_difference", minimum=0)
     if diff == 0:
         return 0.0
     if taxable <= 2_000_000:
         return min(diff, taxable) * 0.05
-    base = max(diff - (taxable - 2_000_000), 50_000)
-    return base * 0.05
+    return max(diff - (taxable - 2_000_000), 50_000) * 0.05
 
 
 def furusato_special_rate_basis(
@@ -374,28 +310,10 @@ def furusato_special_rate_basis(
     human_deduction_difference: float,
     income_tax_basic_deduction: float,
 ) -> float:
-    """住民税特例控除率の判定基礎を返す。
-
-    2025年分所得→令和8年度住民税から、所得税基礎控除引上げ分
-    ``max(所得税基礎控除-48万円, 0)`` も差し引く。
-    """
-
     year = validate_tax_year(tax_year)
-    taxable = _number(
-        taxable_resident_general_income,
-        "taxable_resident_general_income",
-        minimum=0,
-    )
-    human_diff = _number(
-        human_deduction_difference,
-        "human_deduction_difference",
-        minimum=0,
-    )
-    income_basic = _number(
-        income_tax_basic_deduction,
-        "income_tax_basic_deduction",
-        minimum=0,
-    )
+    taxable = _number(taxable_resident_general_income, "taxable_resident_general_income", minimum=0)
+    human_diff = _number(human_deduction_difference, "human_deduction_difference", minimum=0)
+    income_basic = _number(income_tax_basic_deduction, "income_tax_basic_deduction", minimum=0)
     base = taxable - human_diff
     if year >= 2025:
         base -= max(income_basic - RESIDENT_BASIC_DEDUCTION_REFERENCE, 0)
@@ -421,48 +339,25 @@ def furusato_limit_from_notice(
     total_income: float | None = None,
     special_credit_rate_override: float | None = None,
 ) -> dict[str, float | int]:
-    """住民税通知書の実額を使って上限を計算する正準ルート。"""
-
     year = validate_tax_year(tax_year)
-    before = _number(
-        resident_income_levy_before_tax_credits,
-        "resident_income_levy_before_tax_credits",
-        minimum=0,
-    )
-    adjustment = _number(
-        resident_adjustment_deduction_amount,
-        "resident_adjustment_deduction_amount",
-        minimum=0,
-    )
+    before = _number(resident_income_levy_before_tax_credits, "resident_income_levy_before_tax_credits", minimum=0)
+    adjustment = _number(resident_adjustment_deduction_amount, "resident_adjustment_deduction_amount", minimum=0)
     if adjustment > before:
         raise ValueError("resident_adjustment_deduction_amount cannot exceed income levy")
     adjusted_levy = before - adjustment
-
     rate_basis = furusato_special_rate_basis(
-        taxable_resident_general_income,
-        year,
-        human_deduction_difference,
-        income_tax_basic_deduction,
+        taxable_resident_general_income, year, human_deduction_difference, income_tax_basic_deduction
     )
     if special_credit_rate_override is None:
         special_rate = furusato_special_credit_rate(rate_basis)
     else:
-        special_rate = _number(
-            special_credit_rate_override,
-            "special_credit_rate_override",
-            minimum=0,
-        )
+        special_rate = _number(special_credit_rate_override, "special_credit_rate_override", minimum=0)
         if not 0 < special_rate < 1:
             raise ValueError("special_credit_rate_override must be between 0 and 1")
-
     special_credit_cap = adjusted_levy * 0.20
     theoretical_limit = special_credit_cap / special_rate + 2_000
-
     if total_income is not None:
-        income = _number(total_income, "total_income", minimum=0)
-        # 住民税基本控除の寄附金上限（総所得金額等の30%）も満たす必要がある。
-        theoretical_limit = min(theoretical_limit, income * 0.30)
-
+        theoretical_limit = min(theoretical_limit, _number(total_income, "total_income", minimum=0) * 0.30)
     return {
         "tax_year": year,
         "adjusted_resident_income_levy": adjusted_levy,
@@ -479,30 +374,18 @@ def furusato_limit(
     taxable_resident_tax: float,
     *,
     tax_year: int = 2025,
-    human_deduction_difference: float = 50_000,
+    human_deduction_difference: float,
     income_tax_basic_deduction: float | None = None,
     total_income: float | None = None,
 ) -> tuple[int, float, float]:
-    """簡易モードの互換API。
-
-    旧実装の ``住民税課税所得×10%`` をそのまま20%上限の母数にはせず、
-    調整控除を差し引き、特例控除率も所得税限界税率ではなく住民税の公式表で判定する。
-    """
-
     year = validate_tax_year(tax_year)
     taxable_it = _number(taxable_income_tax, "taxable_income_tax", minimum=0)
     taxable_rt = _number(taxable_resident_tax, "taxable_resident_tax", minimum=0)
     estimated_income_tax = income_tax(taxable_it)
     resident_before_credits = resident_tax(taxable_rt)
-    adjustment = resident_adjustment_deduction(
-        taxable_rt,
-        human_deduction_difference,
-    )
+    adjustment = resident_adjustment_deduction(taxable_rt, human_deduction_difference)
     if income_tax_basic_deduction is None:
-        # 総所得がない互換APIでは、課税所得から厳密な基礎控除帯を復元できない。
-        # 2025/2026の一般的な中高所得帯を既定とし、CLI本体では実額を渡す。
         income_tax_basic_deduction = 480_000 if year == 2024 else (580_000 if year == 2025 else 620_000)
-
     result = furusato_limit_from_notice(
         tax_year=year,
         resident_income_levy_before_tax_credits=resident_before_credits,
@@ -512,11 +395,7 @@ def furusato_limit(
         income_tax_basic_deduction=income_tax_basic_deduction,
         total_income=total_income,
     )
-    return (
-        int(result["safe_limit_1000_yen"]),
-        estimated_income_tax,
-        resident_before_credits,
-    )
+    return int(result["safe_limit_1000_yen"]), estimated_income_tax, resident_before_credits
 
 
 def _notice_mode(data: dict[str, Any], tax_year: int) -> dict[str, float | int] | None:
@@ -529,26 +408,16 @@ def _notice_mode(data: dict[str, Any], tax_year: int) -> dict[str, float | int] 
             "Notice mode requires both resident_income_levy_before_tax_credits "
             "and resident_taxable_general_income"
         )
-
-    human_diff = _number(
-        data.get("human_deduction_difference", 50_000),
-        "human_deduction_difference",
-        minimum=0,
-    )
+    human_diff = _required_number(data, "human_deduction_difference", minimum=0)
     income_basic = data.get("basic_deduction_income")
     if income_basic is None:
         aggregate = data.get("total_income")
         if aggregate is None:
-            raise ValueError(
-                "Notice mode requires basic_deduction_income or total_income to determine it"
-            )
+            raise ValueError("Notice mode requires basic_deduction_income or total_income to determine it")
         income_basic = basic_deduction_income_tax(aggregate, tax_year)
-
     adjustment = data.get("resident_adjustment_deduction")
     if adjustment is None:
         adjustment = resident_adjustment_deduction(taxable, human_diff)
-
-    override = data.get("special_credit_rate_override")
     return furusato_limit_from_notice(
         tax_year=tax_year,
         resident_income_levy_before_tax_credits=before,
@@ -557,7 +426,7 @@ def _notice_mode(data: dict[str, Any], tax_year: int) -> dict[str, float | int] 
         human_deduction_difference=human_diff,
         income_tax_basic_deduction=income_basic,
         total_income=data.get("total_income"),
-        special_credit_rate_override=override,
+        special_credit_rate_override=data.get("special_credit_rate_override"),
     )
 
 
@@ -566,7 +435,6 @@ def main(path: str, tax_year: int) -> None:
         data = yaml.safe_load(handle)
     if not isinstance(data, dict):
         raise ValueError("Input YAML must contain a mapping/object at the top level")
-
     year = validate_tax_year(data.get("tax_year", tax_year))
     notice_result = _notice_mode(data, year)
     if notice_result is not None:
@@ -579,20 +447,8 @@ def main(path: str, tax_year: int) -> None:
         print(f"Theoretical donation limit: {notice_result['theoretical_limit_yen']:.0f}円")
         print(f"Safe limit (1,000-yen floor): {notice_result['safe_limit_1000_yen']:.0f}円")
         return
-
-    (
-        taxable_income_tax,
-        taxable_resident_tax,
-        total_income,
-        basic_income_tax,
-        basic_resident_tax,
-    ) = calc_taxable_income_bases(data, year)
-
-    human_diff = _number(
-        data.get("human_deduction_difference", 50_000),
-        "human_deduction_difference",
-        minimum=0,
-    )
+    taxable_income_tax, taxable_resident_tax, total_income, basic_income_tax, basic_resident_tax = calc_taxable_income_bases(data, year)
+    human_diff = _required_number(data, "human_deduction_difference", minimum=0)
     limit, income_tax_amount, resident_tax_amount = furusato_limit(
         taxable_income_tax,
         taxable_resident_tax,
@@ -601,7 +457,6 @@ def main(path: str, tax_year: int) -> None:
         income_tax_basic_deduction=basic_income_tax,
         total_income=total_income,
     )
-
     print(f"Tax year: {year}")
     print("Mode: estimate (use notice mode when available)")
     print(f"Total income (aggregate): {total_income:.0f}")
