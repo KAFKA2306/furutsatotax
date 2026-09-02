@@ -1,5 +1,6 @@
 import importlib.util
 import pathlib
+import tempfile
 import unittest
 
 
@@ -17,7 +18,6 @@ class SalaryIncomeTests(unittest.TestCase):
         self.assertEqual(calc.salary_income_after_deduction(1_000_000, 2026), 260_000)
 
     def test_2024_minimum_deduction_is_fixed_550k(self) -> None:
-        # 旧実装は max(55万円, 収入×40%) として160万円で64万円控除していた。
         self.assertEqual(calc.salary_income_after_deduction(1_600_000, 2024), 1_050_000)
 
     def test_2025_table_rounding_below_6_6m(self) -> None:
@@ -67,8 +67,6 @@ class IncomeTaxBoundaryTests(unittest.TestCase):
 
 class ResidentTaxFurusatoTests(unittest.TestCase):
     def test_special_rate_uses_resident_rule_not_income_tax_marginal_rate(self) -> None:
-        # 令和7年所得→令和8年度住民税では、所得税基礎控除の48万円超過分も
-        # 特例控除率の判定基礎から差し引く。
         basis = calc.furusato_special_rate_basis(
             6_600_000,
             2025,
@@ -83,10 +81,7 @@ class ResidentTaxFurusatoTests(unittest.TestCase):
         self.assertEqual(calc.furusato_special_credit_rate(6_950_001), 0.66517)
 
     def test_adjustment_deduction_for_high_taxable_income(self) -> None:
-        self.assertEqual(
-            calc.resident_adjustment_deduction(6_600_000, 50_000),
-            2_500,
-        )
+        self.assertEqual(calc.resident_adjustment_deduction(6_600_000, 50_000), 2_500)
 
     def test_notice_mode_uses_pre_credit_income_levy_minus_adjustment(self) -> None:
         result = calc.furusato_limit_from_notice(
@@ -151,6 +146,39 @@ class SafetyTests(unittest.TestCase):
 
     def test_income_tax_uses_thousand_yen_tax_base(self) -> None:
         self.assertEqual(calc.income_tax(1_234_999), calc.income_tax(1_234_000))
+
+    def test_employer_dc_without_actual_matching_contribution_fails(self) -> None:
+        with self.assertRaisesRegex(ValueError, "dc_matching is required"):
+            calc.calc_taxable_income_bases(
+                {"salary_income": 5_000_000, "employer_dc_monthly": 10_000},
+                2026,
+            )
+
+    def test_actual_dc_matching_contribution_is_used_as_given(self) -> None:
+        self.assertEqual(
+            calc._dc_matching_deduction(
+                {"employer_dc_monthly": 10_000, "dc_matching": 120_000}
+            ),
+            120_000,
+        )
+
+    def test_notice_mode_requires_human_deduction_difference(self) -> None:
+        with self.assertRaisesRegex(ValueError, "human_deduction_difference is required"):
+            calc._notice_mode(
+                {
+                    "resident_income_levy_before_tax_credits": 400_000,
+                    "resident_taxable_general_income": 6_600_000,
+                    "basic_deduction_income": 620_000,
+                },
+                2026,
+            )
+
+    def test_cli_estimate_mode_requires_human_deduction_difference(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".yml", encoding="utf-8") as handle:
+            handle.write("tax_year: 2026\nsalary_income: 5000000\n")
+            handle.flush()
+            with self.assertRaisesRegex(ValueError, "human_deduction_difference is required"):
+                calc.main(handle.name, 2026)
 
 
 if __name__ == "__main__":

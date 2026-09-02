@@ -48,6 +48,22 @@ class PyodideApiTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(json.loads(first)["safe_limit_1000_yen"], 116_000)
 
+    def test_estimate_mode_requires_human_deduction_difference(self) -> None:
+        with self.assertRaisesRegex(ValueError, "human_deduction_difference is required"):
+            api.calculate({"mode": "estimate", "tax_year": 2026, "salary_income": 5_000_000})
+
+    def test_estimate_mode_rejects_inferred_dc_matching(self) -> None:
+        with self.assertRaisesRegex(ValueError, "dc_matching is required"):
+            api.calculate(
+                {
+                    "mode": "estimate",
+                    "tax_year": 2026,
+                    "salary_income": 5_000_000,
+                    "human_deduction_difference": 50_000,
+                    "employer_dc_monthly": 10_000,
+                }
+            )
+
     def test_unsupported_year_fails_closed(self) -> None:
         with self.assertRaises(ValueError):
             api.calculate({"mode": "estimate", "tax_year": 2027})

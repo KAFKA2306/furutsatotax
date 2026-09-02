@@ -1,6 +1,6 @@
 """Pure calculation adapter for browser/Pyodide callers.
 
-This module deliberately performs no file or network I/O.  It exposes the existing
+This module deliberately performs no file or network I/O. It exposes the existing
 Python tax core through JSON-friendly inputs so the Web UI can migrate away from
 its duplicate JavaScript tax formulas without inventing a third calculation core.
 """
@@ -12,7 +12,7 @@ from typing import Any
 
 from calc_furusato import (
     _notice_mode,
-    _number,
+    _required_number,
     calc_taxable_income_bases,
     furusato_limit,
     validate_tax_year,
@@ -22,9 +22,9 @@ from calc_furusato import (
 def calculate(payload: dict[str, Any]) -> dict[str, Any]:
     """Calculate a donation limit from a JSON-compatible mapping.
 
-    ``mode`` is either ``notice`` or ``estimate``.  Notice mode is preferred when
-    the resident-tax notice fields are available.  Unknown tax years and the same
-    unsupported estimate-mode cases as the CLI fail closed in the canonical core.
+    ``mode`` is either ``notice`` or ``estimate``. Notice mode is preferred when
+    the resident-tax notice fields are available. Unknown tax years and unsupported
+    or incomplete estimate-mode inputs fail closed in the canonical core.
     """
 
     if not isinstance(payload, dict):
@@ -53,11 +53,7 @@ def calculate(payload: dict[str, Any]) -> dict[str, Any]:
         basic_resident_tax,
     ) = calc_taxable_income_bases(payload, year)
 
-    human_diff = _number(
-        payload.get("human_deduction_difference", 50_000),
-        "human_deduction_difference",
-        minimum=0,
-    )
+    human_diff = _required_number(payload, "human_deduction_difference", minimum=0)
     safe_limit, income_tax_amount, resident_tax_amount = furusato_limit(
         taxable_income_tax,
         taxable_resident_tax,
