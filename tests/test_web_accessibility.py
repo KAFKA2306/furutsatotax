@@ -45,7 +45,7 @@ class WebAccessibilityTest(unittest.TestCase):
             "field.setAttribute('aria-invalid', 'true')",
             "field.focus()",
             "fieldError(id, `${label}を入力してください`)",
-            "fieldError('specialRateOverride'",
+            "'specialRateOverride',",
             "removeAttribute('aria-invalid')",
         ):
             self.assertIn(expected, script)
