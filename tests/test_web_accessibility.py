@@ -38,6 +38,18 @@ class WebAccessibilityTest(unittest.TestCase):
         ):
             self.assertIn(expected, script)
 
+    def test_validation_moves_users_to_the_field_that_needs_action(self):
+        script = APP.read_text(encoding="utf-8")
+
+        for expected in (
+            "field.setAttribute('aria-invalid', 'true')",
+            "field.focus()",
+            "fieldError(id, `${label}を入力してください`)",
+            "fieldError('specialRateOverride'",
+            "removeAttribute('aria-invalid')",
+        ):
+            self.assertIn(expected, script)
+
 
 if __name__ == "__main__":
     unittest.main()
