@@ -10,11 +10,17 @@
     const v = value(id).trim();
     return v === '' ? null : Number(v);
   };
+  const fieldError = (id, message) => {
+    const field = $(id);
+    field.setAttribute('aria-invalid', 'true');
+    field.focus();
+    throw new Error(message);
+  };
   const requiredNumber = (id, label) => {
     const v = value(id).trim();
-    if (v === '') throw new Error(`${label}を入力してください`);
+    if (v === '') fieldError(id, `${label}を入力してください`);
     const n = Number(v);
-    if (!Number.isFinite(n)) throw new Error(`${label}を数値で入力してください`);
+    if (!Number.isFinite(n)) fieldError(id, `${label}を数値で入力してください`);
     return n;
   };
   const money = (amount) => `${Math.round(Number(amount)).toLocaleString('ja-JP')}円`;
@@ -28,6 +34,10 @@
   function clearError() {
     $('error').textContent = '';
     $('error').style.display = 'none';
+  }
+
+  function clearFieldError(event) {
+    event.currentTarget.removeAttribute('aria-invalid');
   }
 
   function render(result, modeLabel) {
@@ -52,6 +62,8 @@
       .map(([label, v]) => `<div>${label}</div><div>${v}</div>`)
       .join('');
     $('result').style.display = 'block';
+    $('result').focus({ preventScroll: true });
+    $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function switchMode(mode) {
@@ -107,9 +119,9 @@
       const incomeTaxBasicDeduction = requiredNumber('incomeTaxBasicDeduction', '所得税の基礎控除額');
       const overridePercent = optional('specialRateOverride');
       if ($('hasSpecialTaxationNotice').checked && overridePercent === null) {
-        throw new Error(
-          '分離課税・課税特例があるため、通常の特例控除率表では確定できません。' +
-          '自治体等で確認した特例控除率を入力してください。'
+        fieldError(
+          'specialRateOverride',
+          '分離課税・課税特例があるため、通常の特例控除率表では確定できません。自治体等で確認した特例控除率を入力してください。'
         );
       }
       const result = core.limitFromNotice({
@@ -147,6 +159,10 @@
   }
 
   setupModeTabs();
+  document.querySelectorAll('input, select').forEach((field) => {
+    field.addEventListener('input', clearFieldError);
+    field.addEventListener('change', clearFieldError);
+  });
   $('noticeTab').addEventListener('click', () => switchMode('notice'));
   $('estimateTab').addEventListener('click', () => switchMode('estimate'));
   $('noticeCalc').addEventListener('click', calculateNotice);
