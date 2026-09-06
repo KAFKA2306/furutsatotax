@@ -50,6 +50,19 @@ class WebAccessibilityTest(unittest.TestCase):
         ):
             self.assertIn(expected, script)
 
+    def test_calculation_result_exposes_next_decision_action(self):
+        script = APP.read_text(encoding="utf-8")
+
+        for expected in (
+            "action.id = 'resultNextAction'",
+            "action.href = 'rewards.html'",
+            "result.remainingToSafe",
+            "残り ${money(remaining)} の返礼品を比較する",
+            "action.setAttribute('aria-label'",
+            "renderNextAction(result)",
+        ):
+            self.assertIn(expected, script)
+
 
 if __name__ == "__main__":
     unittest.main()
