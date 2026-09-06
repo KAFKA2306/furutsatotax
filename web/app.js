@@ -40,6 +40,28 @@
     event.currentTarget.removeAttribute('aria-invalid');
   }
 
+  function renderNextAction(result) {
+    let action = $('resultNextAction');
+    if (!action) {
+      action = document.createElement('a');
+      action.id = 'resultNextAction';
+      action.className = 'primary-link';
+      action.style.display = 'inline-block';
+      action.style.marginTop = '18px';
+      action.style.textDecoration = 'none';
+      $('result').appendChild(action);
+    }
+
+    const remaining = result.currentDonation === null
+      ? result.safeLimit1000Yen
+      : Math.max(0, result.remainingToSafe);
+    action.href = 'rewards.html';
+    action.textContent = remaining > 0
+      ? `残り ${money(remaining)} の返礼品を比較する →`
+      : '返礼品の単価を比較する →';
+    action.setAttribute('aria-label', `${action.textContent}。計算結果を確認してから返礼品比較へ進みます`);
+  }
+
   function render(result, modeLabel) {
     clearError();
     $('limit').textContent = money(result.theoreticalLimitYen);
@@ -61,6 +83,7 @@
     $('resultRows').innerHTML = rows
       .map(([label, v]) => `<div>${label}</div><div>${v}</div>`)
       .join('');
+    renderNextAction(result);
     $('result').style.display = 'block';
     $('result').focus({ preventScroll: true });
     $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
