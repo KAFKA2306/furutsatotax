@@ -109,8 +109,10 @@
     const panels = [$('noticePanel'), $('estimatePanel')];
     const modes = ['notice', 'estimate'];
 
+    $('noticeTab').textContent = '通知書がある → 実額で計算（推奨）';
+    $('estimateTab').textContent = '通知書がない → 収入から概算';
     tabList.setAttribute('role', 'tablist');
-    tabList.setAttribute('aria-label', '計算方法');
+    tabList.setAttribute('aria-label', '手元の資料から計算方法を選ぶ');
 
     tabs.forEach((tab, index) => {
       tab.setAttribute('role', 'tab');
