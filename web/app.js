@@ -109,6 +109,8 @@
     const panels = [$('noticePanel'), $('estimatePanel')];
     const modes = ['notice', 'estimate'];
 
+    document.querySelector('.top .help').textContent = '手元の資料に合わせて計算方法を選びます。住民税通知書があれば実額計算を優先します。';
+    document.querySelector('.notice').innerHTML = '<strong>まず、住民税通知書が手元にあるか確認してください。</strong><br>ある場合は通知書の実額で計算します。ない場合は収入から概算できます。';
     $('noticeTab').textContent = '通知書がある → 実額で計算（推奨）';
     $('estimateTab').textContent = '通知書がない → 収入から概算';
     tabList.setAttribute('role', 'tablist');
