@@ -109,6 +109,8 @@
     const panels = [$('noticePanel'), $('estimatePanel')];
     const modes = ['notice', 'estimate'];
 
+    document.querySelector('.top .help').textContent = '手元の資料に合わせて計算方法を選びます。住民税通知書があれば実額計算を優先します。';
+    document.querySelector('.notice').innerHTML = '<strong>まず、住民税通知書が手元にあるか確認してください。</strong><br>ある場合は通知書の実額で計算します。ない場合は収入から概算できます。';
     $('noticeTab').textContent = '通知書がある → 実額で計算（推奨）';
     $('estimateTab').textContent = '通知書がない → 収入から概算';
     tabList.setAttribute('role', 'tablist');
@@ -144,10 +146,7 @@
       const incomeTaxBasicDeduction = requiredNumber('incomeTaxBasicDeduction', '所得税の基礎控除額');
       const overridePercent = optional('specialRateOverride');
       if ($('hasSpecialTaxationNotice').checked && overridePercent === null) {
-        fieldError(
-          'specialRateOverride',
-          '分離課税・課税特例があるため、通常の特例控除率表では確定できません。自治体等で確認した特例控除率を入力してください。'
-        );
+        fieldError('specialRateOverride', '分離課税・課税特例があるため、通常の特例控除率表では確定できません。自治体等で確認した特例控除率を入力してください。');
       }
       const result = core.limitFromNotice({
         taxYear,
@@ -161,9 +160,7 @@
         specialCreditRateOverride: overridePercent === null ? null : overridePercent / 100,
       });
       render(result, '住民税通知書（推奨）');
-    } catch (error) {
-      showError(error);
-    }
+    } catch (error) { showError(error); }
   }
 
   function calculateEstimate() {
@@ -178,9 +175,7 @@
         currentDonation: optional('estimateDonation'),
       });
       render(result, '収入からの概算');
-    } catch (error) {
-      showError(error);
-    }
+    } catch (error) { showError(error); }
   }
 
   setupModeTabs();
