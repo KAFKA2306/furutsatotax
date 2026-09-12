@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const core = window.FurusatoTaxCore;
-  if (!core) throw new Error('tax-core.js failed to load');
+  const python = window.FurusatoTaxPython;
+  if (!python) throw new Error('tax-python.js failed to load');
 
   const $ = (id) => document.getElementById(id);
   const value = (id) => $(id).value;
@@ -62,7 +62,22 @@
     action.setAttribute('aria-label', `${action.textContent}。計算結果を確認してから返礼品比較へ進みます`);
   }
 
-  function render(result, modeLabel) {
+  function browserResult(result) {
+    return {
+      theoreticalLimitYen: result.theoretical_limit_yen,
+      safeLimit1000Yen: result.safe_limit_1000_yen,
+      adjustedIncomeLevy: result.adjusted_resident_income_levy,
+      specialCreditCap: result.special_credit_cap,
+      specialRateBasis: result.special_credit_rate_basis,
+      specialCreditRate: result.special_credit_rate,
+      currentDonation: result.current_donation,
+      remainingToTheoretical: result.remaining_to_theoretical,
+      remainingToSafe: result.remaining_to_safe,
+    };
+  }
+
+  function render(rawResult, modeLabel) {
+    const result = browserResult(rawResult);
     clearError();
     $('limit').textContent = money(result.theoreticalLimitYen);
     $('safeLimit').textContent = `1,000円単位で安全側に切ると ${money(result.safeLimit1000Yen)}`;
@@ -140,10 +155,8 @@
     switchMode('notice');
   }
 
-  function calculateNotice() {
+  async function calculateNotice() {
     try {
-      const taxYear = Number(value('taxYear'));
-      const incomeTaxBasicDeduction = requiredNumber('incomeTaxBasicDeduction', '所得税の基礎控除額');
       const overridePercent = optional('specialRateOverride');
       if ($('hasSpecialTaxationNotice').checked && overridePercent === null) {
         fieldError(
@@ -151,16 +164,17 @@
           '分離課税・課税特例があるため、通常の特例控除率表では確定できません。自治体等で確認した特例控除率を入力してください。'
         );
       }
-      const result = core.limitFromNotice({
-        taxYear,
-        totalIncome: optional('totalIncome'),
-        taxableResidentGeneralIncome: requiredNumber('taxableResidentGeneralIncome', '課税総所得金額'),
-        incomeLevyBeforeTaxCredits: requiredNumber('incomeLevyBeforeTaxCredits', '税額控除前所得割額'),
-        adjustmentDeduction: requiredNumber('adjustmentDeduction', '調整控除額'),
-        humanDeductionDifference: requiredNumber('humanDeductionDifference', '所得税との人的控除額の差'),
-        incomeTaxBasicDeduction,
-        currentDonation: optional('currentDonation'),
-        specialCreditRateOverride: overridePercent === null ? null : overridePercent / 100,
+      const result = await python.calculate({
+        mode: 'notice',
+        tax_year: Number(value('taxYear')),
+        total_income: optional('totalIncome'),
+        resident_taxable_general_income: requiredNumber('taxableResidentGeneralIncome', '課税総所得金額'),
+        resident_income_levy_before_tax_credits: requiredNumber('incomeLevyBeforeTaxCredits', '税額控除前所得割額'),
+        resident_adjustment_deduction: requiredNumber('adjustmentDeduction', '調整控除額'),
+        human_deduction_difference: requiredNumber('humanDeductionDifference', '所得税との人的控除額の差'),
+        basic_deduction_income: requiredNumber('incomeTaxBasicDeduction', '所得税の基礎控除額'),
+        current_donation: optional('currentDonation'),
+        special_credit_rate_override: overridePercent === null ? null : overridePercent / 100,
       });
       render(result, '住民税通知書（推奨）');
     } catch (error) {
@@ -168,16 +182,18 @@
     }
   }
 
-  function calculateEstimate() {
+  async function calculateEstimate() {
     try {
-      const result = core.estimateFromIncome({
-        taxYear: Number(value('estimateTaxYear')),
-        salaryIncome: requiredNumber('salaryIncome', '給与収入'),
-        otherAggregateIncome: requiredNumber('otherAggregateIncome', 'その他の総合課税所得'),
-        residentOtherDeductions: requiredNumber('residentOtherDeductions', '住民税の所得控除'),
-        humanDeductionDifference: requiredNumber('estimateHumanDifference', '所得税との人的控除額の差'),
-        hasSeparateTaxation: $('hasSeparateTaxation').checked,
-        currentDonation: optional('estimateDonation'),
+      const result = await python.calculate({
+        mode: 'estimate',
+        tax_year: Number(value('estimateTaxYear')),
+        salary_income: requiredNumber('salaryIncome', '給与収入'),
+        side_income: requiredNumber('otherAggregateIncome', 'その他の総合課税所得'),
+        expense_rate: 0,
+        other_common_deductions: requiredNumber('residentOtherDeductions', '住民税の所得控除'),
+        human_deduction_difference: requiredNumber('estimateHumanDifference', '所得税との人的控除額の差'),
+        separately_taxed_income: $('hasSeparateTaxation').checked ? 1 : 0,
+        current_donation: optional('estimateDonation'),
       });
       render(result, '収入からの概算');
     } catch (error) {
